@@ -1319,9 +1319,7 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 {
 	$region = mysql_real_escape_string($region);
 	$mode   = mysql_real_escape_string($mode);
-
-	if (!isGUID($region)) return false;
-	if (!preg_match("/^[0-2]$/", $mode)) false;
+	if (!isGUID($region) or !preg_match("/^[0-2]$/", $mode)) false;
 
 	$flg = false;
 	if (!is_object($db)) {
