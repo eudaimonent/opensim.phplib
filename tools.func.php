@@ -13,6 +13,7 @@
  *
  *
  * function  isAlphabetNumeric($str)
+ * function  isAlphabetNumericSpecial($str)
  * function  isGUID($uuid)
  *
  * function  make_random_hash()
@@ -25,12 +26,19 @@
 
 function  isAlphabetNumeric($str)
 {
-	if ($str==null or $str=="") return false;
+	if ($str==null) return false;
 
-	if (!preg_match("/^\w+$/", $str)) {
-		$str = mb_ereg_replace('[^\w]', '', $str);
-		return false;
-	} 
+	if (!preg_match("/^\w+$/", $str)) return false;
+	return true;
+}
+
+
+
+function  isAlphabetNumericSpecial($str)
+{
+	if ($str==null) return false;
+
+	if (!preg_match("/^[_a-zA-Z0-9 @%#\-\.]+$/", $str)) return false;
 	return true;
 }
 
@@ -38,7 +46,7 @@ function  isAlphabetNumeric($str)
 
 function  isGUID($uuid)
 {
-	if ($uuid==null or $uuid=="") return false;
+	if ($uuid==null) return false;
 	if (!preg_match("/^[0-9A-Fa-f]{8,8}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{12,12}$/", $uuid)) return false;
 
 	return true;
