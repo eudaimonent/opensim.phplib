@@ -55,7 +55,7 @@ function  isAlphabetNumericSpecial($str, $nullok=false)
 
 function  isGUID($uuid, $nullok=false)
 {
-	if ($str==null) return $nullok;
+	if ($uuid==null) return $nullok;
 	if (!preg_match("/^[0-9A-Fa-f]{8,8}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{12,12}$/", $uuid)) return false;
 	return true;
 }
