@@ -276,6 +276,9 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 
 
 
+//
+// Attention: When call this function, please check $condition for prevention of SQL Injection.
+//
 function  opensim_get_avatar_infos($condition="", &$db=null)
 {
 	$flg = false;
@@ -314,6 +317,9 @@ function  opensim_get_avatar_infos($condition="", &$db=null)
 
 
 
+//
+// Attention: When call this function, please check $condition for prevention of SQL Injection.
+//
 function  opensim_get_avatar_profiles($condition="", &$db=null)
 {
 	$flg = false;
@@ -392,7 +398,10 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, &$db=null)
 {
 	if (!isGUID($UUID)) return false;
-	if ($firstname=="" or $lastname=="" or $passwd=="") return false;
+	if (!isAlphabetNumericSpecial($firstname))  return false;
+	if (!isAlphabetNumericSpecial($lastname))   return false;
+	if (!isAlphabetNumericSpecial($passwd))     return false;
+	if (!isAlphabetNumericSpecial($homeregion)) return false;
 
 	$flg = false;
 	if (!is_object($db)) {
@@ -571,6 +580,9 @@ function  opensim_get_region_name($region, &$db=null)
 
 
 
+//
+// Attention: When call this function, please check $condition for prevention of SQL Injection.
+//
 function  opensim_get_region_names($condition="", &$db=null)
 {
 	$flg = false;
@@ -593,7 +605,7 @@ function  opensim_get_region_names($condition="", &$db=null)
 
 function  opensim_get_region_name_by_id($id, &$db=null)
 {
-	if ($id==null) return null;
+	if (!isGUID($id) and !isNumeric($id)) return null;
 
 	$flg = false;
 	if (!is_object($db)) {
@@ -603,15 +615,13 @@ function  opensim_get_region_name_by_id($id, &$db=null)
 
 	if (isGUID($id)) {
 		$db->query("SELECT regionName FROM regions WHERE uuid='$id'");
-		if ($db->Error==0) {
-			list($regionName) = $db->next_record();
-			if ($flg) $db->close();
-			return $regionName;
-		}
+		list($regionName) = $db->next_record();
+	}
+	else {
+		$db->query("SELECT regionName FROM regions WHERE regionHandle='$id'");
+		list($regionName) = $db->next_record();
 	}
 
-	$db->query("SELECT regionName FROM regions WHERE regionHandle='$id'");
-	list($regionName) = $db->next_record();
 	if ($flg) $db->close();
 
 	return $regionName;
@@ -646,6 +656,9 @@ function  opensim_get_region_info($region, &$db=null)
 
 
 
+//
+// Attention: When call this function, please check $condition for prevention of SQL Injection.
+//
 function  opensim_get_region_infos($condition="", &$db=null)
 {
 	$flg = false;
@@ -771,7 +784,8 @@ function  opensim_get_region_owner($region, &$db=null)
 
 function  opensim_set_region_owner($region, $owner, &$db=null)
 {
-	if (!isGUID($region) or !isGUID($owner)) return false;
+	if (!isGUID($region)) return false;
+	if (!isGUID($owner))  return false;
 
 	$flg = false;
 	if (!is_object($db)) {
@@ -898,7 +912,7 @@ function  opensim_create_inventory_folders($uuid, &$db=null)
 function  opensim_set_home_region($uuid, $hmregion, &$db=null)
 {
 	if (!isGUID($uuid)) return false;
-	if ($hmregion=="")  return false;
+	if (!isAlphabetNumericSpecial($hmregion)) return false;
 
 	$flg = false;
 	if (!is_object($db)) {
@@ -943,6 +957,7 @@ function  opensim_set_home_region($uuid, $hmregion, &$db=null)
 function  opensim_get_password($uuid, $tbl="", &$db=null)
 {
 	if (!isGUID($uuid)) return null;
+	if (!isAlphabetNumeric($tbl, true)) return null;
 
 	$passwdhash = null;
 	$passwdsalt = null;
@@ -982,9 +997,15 @@ function  opensim_get_password($uuid, $tbl="", &$db=null)
 function  opensim_set_password($uuid, $passwdhash, $passwdsalt="", $tbl="", &$db=null)
 {
 	if (!isGUID($uuid)) return false;
+	if (!isAlphabetNumeric($passwdhash)) return false;
+	if (!isAlphabetNumeric($passwdsalt, true)) return false;
+	if (!isAlphabetNumeric($tbl, true)) return false;
 
-	$setpasswd = "passwordHash='$passwdhash'";
-	if ($passwdsalt!=null and $passwdsalt!="") $setpasswd .= ",passwordSalt='$passwdsalt'";
+	if ($passwdsalt=="") {
+		$passwdsalt = make_random_hash();
+		$passwdhash = md5($passwdhash.":".$passwdsalt);
+	}
+	$setpasswd = "passwordHash='$passwdhash',passwordSalt='$passwdsalt'";
 
 	$flg = false;
 	if (!is_object($db)) {
@@ -1061,6 +1082,8 @@ function  opensim_supply_passwordSalt(&$db=null)
 
 function  opensim_succession_agents_to_presence($region_id, &$db=null)
 {
+	if (!isGUID($region_id)) return false;
+
 	$flg = false;
 	if (!is_object($db)) {
 		$db  = new DB;
@@ -1111,6 +1134,8 @@ function  opensim_succession_agents_to_presence($region_id, &$db=null)
 
 function  opensim_succession_agents_to_griduser($region_id, &$db=null)
 {
+	if (!isGUID($region_id)) return false;
+
 	$flg = false;
 	if (!is_object($db)) {
 		$db  = new DB;
@@ -1157,6 +1182,8 @@ function  opensim_succession_agents_to_griduser($region_id, &$db=null)
 
 function  opensim_succession_presence_to_griduser($region_id, &$db=null)
 {
+	if (!isGUID($region_id)) return false;
+
 	$flg = false;
 	if (!is_object($db)) {
 		$db  = new DB;
@@ -1206,6 +1233,8 @@ function  opensim_succession_presence_to_griduser($region_id, &$db=null)
 //
 function  opensim_succession_data($region_name, &$db=null)
 {
+	if (!isAlphabetNumericSpecial($region_name)) return false;
+
 	$flg = false;
 	if (!is_object($db)) {
 		$db  = new DB;
@@ -1268,7 +1297,8 @@ function  opensim_get_voice_mode($region, &$db=null)
 
 function  opensim_set_voice_mode($region, $mode, &$db=null)
 {
-	if (!isGUID($region) or !preg_match("/^[0-2]$/", $mode)) false;
+	if (!isGUID($region)) false;
+	if (!preg_match("/^[0-2]$/", $mode)) false;
 
 	$flg = false;
 	if (!is_object($db)) {
