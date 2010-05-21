@@ -12,10 +12,10 @@
  * Function List
  *
  *
- * function  isNumeric($str)
- * function  isAlphabetNumeric($str)
- * function  isAlphabetNumericSpecial($str)
- * function  isGUID($uuid)
+ * function  isNumeric($str, $nullok=false)
+ * function  isAlphabetNumeric($str, $nullok=false)
+ * function  isAlphabetNumericSpecial($str, $nullok=false)
+ * function  isGUID($uuid, $nullok=false)
  *
  * function  make_random_hash()
  * function  make_random_guid()
@@ -26,36 +26,36 @@
 
 
 
-function  isNumeric($str)
+function  isNumeric($str, $nullok=false)
 {
-	if ($str==null) return false;
+	if ($str==null) return $nullok;
 	if (!preg_match("/^[0-9]+$/", $str)) return false;
 	return true;
 }
 
 
 
-function  isAlphabetNumeric($str)
+function  isAlphabetNumeric($str, $nullok=false)
 {
-	if ($str==null) return false;
+	if ($str==null) return $nullok;
 	if (!preg_match("/^\w+$/", $str)) return false;
 	return true;
 }
 
 
 
-function  isAlphabetNumericSpecial($str)
+function  isAlphabetNumericSpecial($str, $nullok=false)
 {
-	if ($str==null) return false;
+	if ($str==null) return $nullok;
 	if (!preg_match("/^[_a-zA-Z0-9 @%#\-\.]+$/", $str)) return false;
 	return true;
 }
 
 
 
-function  isGUID($uuid)
+function  isGUID($uuid, $nullok=false)
 {
-	if ($uuid==null) return false;
+	if ($str==null) return $nullok;
 	if (!preg_match("/^[0-9A-Fa-f]{8,8}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{12,12}$/", $uuid)) return false;
 	return true;
 }
