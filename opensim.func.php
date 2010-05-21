@@ -1077,10 +1077,10 @@ function  opensim_succession_agents_to_presence($region_id, &$db=null)
 		{
 			$db2->query("SELECT uuid FROM regions WHERE regionHandle='$homeHandle'");
 			list($homeRegion) = $db2->next_record();
-			if ($homeRegion==null or $homeRegion=="") $homeRegion = $region_id;
+			if ($homeRegion==null) $homeRegion = $region_id;
 
 			$db2->query("SELECT UserID,HomeRegionID FROM Presence WHERE UserID='$UUID'");
-			list($userid,$hmregion) = $db2->next_record();
+			list($userid, $hmregion) = $db2->next_record();
 
 			if ($userid==null) {
 				if ($login!=0 and $logout<$login) $logout = $login;
@@ -1125,10 +1125,10 @@ function  opensim_succession_agents_to_griduser($region_id, &$db=null)
 		while(list($UUID,$currentRegion,$login,$logout,$homeHandle) = $db->next_record()) {
 			$db2->query("SELECT uuid FROM regions WHERE regionHandle='$homeHandle'");
 			list($homeRegion) = $db2->next_record();
-			if ($homeRegion==null or $homeRegion=="") $homeRegion = $region_id;
+			if ($homeRegion==null) $homeRegion = $region_id;
 
 			$db2->query("SELECT UserID,HomeRegionID FROM GridUser WHERE UserID='$UUID'");
-			list($userid,$hmregion) = $db2->next_record();
+			list($userid, $hmregion) = $db2->next_record();
 
 			if ($userid==null) {
 				if ($login!=0 and $logout<$login) $logout = $login;
@@ -1163,18 +1163,16 @@ function  opensim_succession_presence_to_griduser($region_id, &$db=null)
 		$flg = true;
 	}
 
-	$db->query("SELECT agents.UUID,currentRegion,loginTime,logoutTime,homeRegion FROM agents,users WHERE agents.UUID=users.UUID");
+	$db->query("SELECT UserID,RegionID,Login,Logout,HomeRegionID FROM Presence");
 	$errno = $db->Errno;
 	
 	if ($errno==0) {
 		$db2 = new DB;
-		while(list($UUID,$currentRegion,$login,$logout,$homeHandle) = $db->next_record()) {
-			$db2->query("SELECT uuid FROM regions WHERE regionHandle='$homeHandle'");
-			list($homeRegion) = $db2->next_record();
-			if ($homeRegion==null or $homeRegion=="") $homeRegion = $region_id;
+		while(list($UUID,$currentRegion,$login,$logout,$homeRegion) = $db->next_record()) {
+			if ($homeRegion==null) $homeRegion = $region_id;
 
 			$db2->query("SELECT UserID,HomeRegionID FROM GridUser WHERE UserID='$UUID'");
-			list($userid,$hmregion) = $db2->next_record();
+			list($userid, $hmregion) = $db2->next_record();
 
 			if ($userid==null) {
 				if ($login!=0 and $logout<$login) $logout = $login;
