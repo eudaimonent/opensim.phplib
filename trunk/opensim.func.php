@@ -1247,16 +1247,17 @@ function  opensim_succession_data($region_name, &$db=null)
 
 	$db->query("SELECT uuid FROM regions WHERE regionName='".$region_name."'");
 	list($region_id) = $db->next_record();
+	if ($region_id=="") $region_id = "00000000-0000-0000-0000-000000000000";
 
-	if ($exist_presence and $exist_griduser) {
-		opensim_succession_presence_to_griduser($region_id, $db);
-	}
+	//if ($exist_presence and $exist_griduser) {
+	//	opensim_succession_presence_to_griduser($region_id, $db);
+	//}
 	if ($exist_agents and $exist_griduser) {
 		opensim_succession_agents_to_griduser($region_id, $db);
 	}
-	if ($exist_agents and $exist_presence) {
-		opensim_succession_agents_to_presence($region_id, $db);
-	}
+	//if ($exist_agents and $exist_presence) {
+	//	opensim_succession_agents_to_presence($region_id, $db);
+	//}
 
 	if ($flg) $db->close();
 	return;
