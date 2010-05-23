@@ -365,13 +365,6 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 			if ($onln=="True") $online = true;
 		}
 	}
-	else if ($db->exist_table("Presence")) {
-		$db->query("SELECT Online,RegionID FROM Presence WHERE UserID='$uuid' AND Logout='0'");
-		if ($db->Errno==0) {
-			list($onln, $region) = $db->next_record();
-			if ($onln=="true") $online = true;
-		}
-	}
 	else if ($db->exist_table("agents")) {
 		$db->query("SELECT agentOnline,currentRegion FROM agents WHERE UUID='$uuid' AND logoutTime='0'");
 		if ($db->Errno==0) {
