@@ -79,8 +79,8 @@ function  opensim_get_db_version(&$db=null)
 	}
 
 	$ver = "0.0";
-	if ($db->exist_table("UserAccounts")) $ver = "0.7";
-	else if ($db->exist_table("users"))   $ver = "0.6";
+	if ($db->exist_table("GridUser"))  $ver = "0.7";
+	else if ($db->exist_table("users"))$ver = "0.6";
 	if ($db->Errno!=0) $ver = "0.0";
 
 	if ($flg) $db->close();
