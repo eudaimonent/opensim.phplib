@@ -990,11 +990,10 @@ function  opensim_set_password($uuid, $passwdhash, $passwdsalt="", $tbl="", &$db
 	if (!isAlphabetNumeric($passwdsalt, true)) return false;
 	if (!isAlphabetNumeric($tbl, true)) return false;
 
-	if ($passwdsalt=="") {
-		$passwdsalt = make_random_hash();
-		$passwdhash = md5($passwdhash.":".$passwdsalt);
+	$setpasswd = "passwordHash='$passwdhash'";
+	if ($passwdsalt!="") {
+		$setpasswd .= ",passwordSalt='$passwdsalt'";
 	}
-	$setpasswd = "passwordHash='$passwdhash',passwordSalt='$passwdsalt'";
 
 	$flg = false;
 	if (!is_object($db)) {
