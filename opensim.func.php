@@ -36,7 +36,7 @@
  function  opensim_get_region_owner($region, &$db=null)
  function  opensim_set_region_owner($region, $woner_uuid, &$db=null)
  function  opensim_create_inventory_folders($uuid, &$db=null)
- function  opensim_set_home_region($uuid, $region, &$db=null)
+ function  opensim_set_home_region($uuid, $hmregion, $pos_x="128", $pos_y="128", $pos_z="0", &$db=null)
 
  function  opensim_get_password($uuid, $tbl="", &$db=null)
  function  opensim_set_password($uuid, $passwdhash, $passwdsalt="", $tbl="", &$db=null)
@@ -220,8 +220,10 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 	$profileTXT = "";
 
 	if ($db->exist_table("GridUser")) {
+		//$db->query("SELECT PrincipalID,FirstName,LastName,HomeRegionID,Created,Login FROM UserAccounts".
+		//				" LEFT JOIN GridUser ON PrincipalID=UserID AND Logout!='0' WHERE PrincipalID='$uuid'");
 		$db->query("SELECT PrincipalID,FirstName,LastName,HomeRegionID,Created,Login FROM UserAccounts".
-						" LEFT JOIN GridUser ON PrincipalID=UserID AND Logout!='0' WHERE PrincipalID='$uuid'");
+						" LEFT JOIN GridUser ON PrincipalID=UserID WHERE PrincipalID='$uuid'");
 		list($UUID, $firstname, $lastname, $regionUUID, $created, $lastlogin) = $db->next_record();
 		$db->query("SELECT regionName,serverIP,serverHttpPort,serverURI FROM regions WHERE uuid='$regionUUID'");
 		list($regionName, $serverIP, $serverHttpPort, $serverURI) = $db->next_record();
@@ -898,10 +900,11 @@ function  opensim_create_inventory_folders($uuid, &$db=null)
 // for Home Region
 //
 
-function  opensim_set_home_region($uuid, $hmregion, &$db=null)
+function  opensim_set_home_region($uuid, $hmregion, $pos_x="128", $pos_y="128", $pos_z="0", &$db=null)
 {
 	if (!isGUID($uuid)) return false;
 	if (!isAlphabetNumericSpecial($hmregion)) return false;
+	if (!isNumeric($pos_x) or !isNumeric($pos_y) or !isNumeric($pos_z)) return false;
 
 	$flg = false;
 	if (!is_object($db)) {
@@ -915,11 +918,14 @@ function  opensim_set_home_region($uuid, $hmregion, &$db=null)
 		list($regionID, $regionHandle) = $db->next_record();
 
 		if ($db->exist_table("Griduser")) {
-			$db->query("UPDATE GridUser SET HomeRegionID='$regionID' WHERE UserID='$uuid'");
+			$homePosition = "<$pos_x,$pos_y,$pos_z>";
+			$db->query("UPDATE GridUser SET HomeRegionID='$regionID',HomePosition='$homePosition' WHERE UserID='$uuid'");
 			$errno = $db->Errno;
 		}
+
 		if ($db->exist_table("users") and $errno==0) {
-			$db->query("UPDATE users SET homeRegion='$regionHandle',homeRegionID='$regionID' WHERE UUID='$uuid'");
+			$homePosition = "homeLocationX='$pos_x',homeLocationY='$pos_y',homeLocationZ='$pos_z' ";
+			$db->query("UPDATE users SET homeRegion='$regionHandle',homeRegionID='$regionID',$homePosition WHERE UUID='$uuid'");
 			if ($db->Errno!=0) {
 				if (!$db->exist_table("auth")) $errno = 99;
 			}
@@ -1078,15 +1084,21 @@ function  opensim_succession_agents_to_griduser($region_id, &$db=null)
 		$flg = true;
 	}
 
-	$db->query("SELECT agents.UUID,currentRegion,loginTime,logoutTime,homeRegion FROM agents,users WHERE agents.UUID=users.UUID");
+	$db->query("SELECT agents.UUID,currentRegion,loginTime,logoutTime,homeRegion,".
+								"homeLocationX,homeLocationY,homeLocationZ FROM agents,users WHERE agents.UUID=users.UUID");
 	$errno = $db->Errno;
 	
 	if ($errno==0) {
 		$db2 = new DB;
-		while(list($UUID,$currentRegion,$login,$logout,$homeHandle) = $db->next_record()) {
+		while(list($UUID,$currentRegion,$login,$logout,$homeHandle,$locX,$locY,$locZ) = $db->next_record()) {
 			$db2->query("SELECT uuid FROM regions WHERE regionHandle='$homeHandle'");
 			list($homeRegion) = $db2->next_record();
-			if ($homeRegion==null) $homeRegion = $region_id;
+			if ($homeRegion==null) {
+				$homeRegion = $region_id;
+				$locX = "128";
+				$locY = "128";
+				$locZ = "0";
+			}
 
 			$db2->query("SELECT UserID,HomeRegionID FROM GridUser WHERE UserID='$UUID'");
 			list($userid, $hmregion) = $db2->next_record();
@@ -1095,7 +1107,7 @@ function  opensim_succession_agents_to_griduser($region_id, &$db=null)
 				if ($login!=0 and $logout<$login) $logout = $login;
 
 				$db2->query("INSERT INTO GridUser (UserID,HomeRegionID,HomePosition,HomeLookAt,LastRegionID,LastPosition,LastLookAt,Online,Login,Logout) ".
-							"VALUES ('$UUID','$homeRegion','<128,128,0>','<0,0,0>','$currentRegion','<128,128,0>','<0,0,0>','False','$login','$logout')");
+							"VALUES ('$UUID','$homeRegion','<$locX,$locY,$locZ>','<0,0,0>','$currentRegion','<128,128,0>','<0,0,0>','False','$login','$logout')");
 				$errno =$db2->Errno;
 
 				if ($errno!=0) {
@@ -1103,7 +1115,50 @@ function  opensim_succession_agents_to_griduser($region_id, &$db=null)
 				}
 			}
 			else if ($hmregion=="00000000-0000-0000-0000-000000000000" or $hmregion==null) {
-				$db2->query("UPDATE GridUser SET HomeRegionID='$homeRegion' WHERE UserID='$UUID'");
+				$db2->query("UPDATE GridUser SET HomeRegionID='$homeRegion',HomePosition='<$locX,$locY,$locZ>' WHERE UserID='$UUID'");
+			}
+		}
+	}
+	//$db2->close();	// should not be close!!
+	if ($flg) $db->close();
+
+	if ($errno!=0) return false;
+	return true;
+}
+
+
+
+function  opensim_succession_useraccounts_to_griduser($region_id, &$db=null)
+{
+	if (!isGUID($region_id)) return false;
+
+	$flg = false;
+	if (!is_object($db)) {
+		$db  = new DB;
+		$flg = true;
+	}
+
+	$db->query("SELECT PrincipalID FROM UserAccounts");
+	$errno = $db->Errno;
+	$homeRegion = $region_id;
+	
+	if ($errno==0) {
+		$db2 = new DB;
+		while(list($UUID) = $db->next_record()) {
+			$db2->query("SELECT UserID,HomeRegionID FROM GridUser WHERE UserID='$UUID'");
+			list($userid, $hmregion) = $db2->next_record();
+
+			if ($userid==null) {
+				$db2->query("INSERT INTO GridUser (UserID,HomeRegionID,HomePosition,HomeLookAt,LastRegionID,LastPosition,LastLookAt,Online,Login,Logout) ".
+							"VALUES ('$UUID','$homeRegion','<128,128,0>','<0,0,0>','$homeRegion','<128,128,0>','<0,0,0>','False','0','0')");
+				$errno =$db2->Errno;
+
+				if ($errno!=0) {
+					$db->query("DELETE FROM GridUser WHERE UserID='$UUID'");
+				}
+			}
+			else if ($hmregion=="00000000-0000-0000-0000-000000000000" or $hmregion==null) {
+				$db2->query("UPDATE GridUser SET HomeRegionID='$homeRegion',HomePosition='<128,128,0>' WHERE UserID='$UUID'");
 			}
 		}
 	}
@@ -1134,16 +1189,21 @@ function  opensim_succession_data($region_name, &$db=null)
 
 	$exist_agents   = $db->exist_table("agents");
 	$exist_griduser = $db->exist_table("GridUser");
+	$exist_usracnt  = $db->exist_table("UserAccounts");
+
+	$region_id = "";
+	if ($region_name!="") {
+		$db->query("SELECT uuid FROM regions WHERE regionName='".$region_name."'");
+		list($region_id) = $db->next_record();
+	}
+	if ($region_id=="") $region_id = "00000000-0000-0000-0000-000000000000";
 
 	if ($exist_agents and $exist_griduser) {
-		$region_id = "";
-		if ($region_name!="") {
-			$db->query("SELECT uuid FROM regions WHERE regionName='".$region_name."'");
-			list($region_id) = $db->next_record();
-		}
-		if ($region_id=="") $region_id = "00000000-0000-0000-0000-000000000000";
-
 		opensim_succession_agents_to_griduser($region_id, $db);
+	}
+
+	if ($exist_usracnt and $exist_griduser) {
+		opensim_succession_useraccounts_to_griduser($region_id, $db);
 	}
 
 	if ($flg) $db->close();
