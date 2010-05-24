@@ -1224,14 +1224,11 @@ function  opensim_recreate_presence(&$db=null)
 		$flg = true;
 	}
 
-	$exist_presence = $db->exist_table("Presence");
-	$exist_griduser = $db->exist_table("GridUser");
-
-	if ($exist_presence and $exist_griduser) {
+	if ($db->exist_field("Presence", "HomeReginID")) {
 		$db->query("DROP TABLE Presence");
 		$db->query("DELETE FROM migrations WHERE name='Presence'");
 	}
-	// Creation is automatic. 
+	// Creation is automatic by ROBUST server. 
 
 	if ($flg) $db->close();
 	return;
