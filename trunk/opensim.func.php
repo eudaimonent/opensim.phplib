@@ -323,12 +323,13 @@ function  opensim_get_avatars_profiles_from_users($condition="", &$db=null)
 		$db  = new DB;
 		$flg = true;
 	}
-	$profs = array();
+	$profs = null;
 
 	if ($db->exist_table("users")) {
 		$db->query("SELECT UUID,profileCanDoMask,profileWantDoMask,profileAboutText,".
 						"profileFirstText,profileImage,profileFirstImage,partner,email FROM users ".$condition);
 		if ($db->Errno==0) {
+			$profs = array();
 			while (list($UUID,$skilmask,$wantmask,$abouttext,$firsttext,$image,$firstimage,$partnar,$email) = $db->next_record()) {
 				$profs[$UUID]['UUID'] 		= $UUID;
 				$profs[$UUID]['SkillsMask'] = $skilmask;
@@ -1230,6 +1231,7 @@ function  opensim_recreate_presence(&$db=null)
 		$db->query("DROP TABLE Presence");
 		$db->query("DELETE FROM migrations WHERE name='Presence'");
 	}
+	// Creation is automatic. 
 
 	if ($flg) $db->close();
 	return;
