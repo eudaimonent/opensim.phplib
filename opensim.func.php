@@ -44,6 +44,7 @@
  function  opensim_succession_presence(&$db=null)
 
  function  opensim_succession_data($region_nmae, &$db=null)
+ function  opensim_recreate_presence(&$db=null)
 
  function  opensim_get_voice_mode($region, &$db=null)
  function  opensim_set_voice_mode($region, $mode, &$db=null)
@@ -1173,6 +1174,7 @@ function  opensim_succession_useraccounts_to_griduser($region_id, &$db=null)
 
 //
 // agents -> GridUser
+// UserAccounts -> GridUser
 //
 //		$region_name is default home region name.
 //
@@ -1192,7 +1194,7 @@ function  opensim_succession_data($region_name, &$db=null)
 
 	$region_id = "";
 	if ($region_name!="") {
-		$db->query("SELECT uuid FROM regions WHERE regionName='".$region_name."'");
+		$db->query("SELECT uuid FROM regions WHERE regionName='$region_name'");
 		list($region_id) = $db->next_record();
 	}
 	if ($region_id=="") $region_id = "00000000-0000-0000-0000-000000000000";
@@ -1209,6 +1211,29 @@ function  opensim_succession_data($region_name, &$db=null)
 	return;
 }
 
+
+
+//
+//
+function  opensim_recreate_presence(&$db=null)
+{
+	$flg = false;
+	if (!is_object($db)) {
+		$db  = new DB;
+		$flg = true;
+	}
+
+	$exist_presence = $db->exist_table("Presence");
+	$exist_griduser = $db->exist_table("GridUser");
+
+	if ($exist_presence and $exist_griduser) {
+		$db->query("DROP TABLE Presence");
+		$db->query("DELETE FROM migrations WHERE name='Presence'");
+	}
+
+	if ($flg) $db->close();
+	return;
+}
 
 
 
