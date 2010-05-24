@@ -1224,7 +1224,7 @@ function  opensim_recreate_presence(&$db=null)
 		$flg = true;
 	}
 
-	if ($db->exist_field("Presence", "HomeReginID")) {
+	if ($db->exist_field("Presence", "HomeRegionID")) {
 		$db->query("DROP TABLE Presence");
 		$db->query("DELETE FROM migrations WHERE name='Presence'");
 	}
