@@ -1133,11 +1133,11 @@ function  opensim_succession_data($region_name, &$db=null)
 	if ($region_id=="") $region_id = "00000000-0000-0000-0000-000000000000";
 
 	if ($exist_agents and $exist_griduser) {
-		opensim_succession_agents_to_griduser($region_id, $db);
+		opensim_succession_agents_to_griduser($region_id);
 	}
 
 	if ($exist_usracnt and $exist_griduser) {
-		opensim_succession_useraccounts_to_griduser($region_id, $db);
+		opensim_succession_useraccounts_to_griduser($region_id);
 	}
 
 	return;
