@@ -317,12 +317,11 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 //
 // return:
 //		$avinfos[$UUID]['UUID']	     ... UUID
-//		$avinfos[$UUID]['firstname'] ... firstname
-//		$avinfos[$UUID]['lastname']  ... lastname
+//		$avinfos[$UUID]['firstname'] ... first name
+//		$avinfos[$UUID]['lastname']  ... lasti name
 //		$avinfos[$UUID]['created']   ... created time
 //		$avinfos[$UUID]['lastlogin'] ... lastlogin time
-//		$avinfos[$UUID]['hmregion']  ... uuid of Region
-//
+//		$avinfos[$UUID]['hmregion']  ... uuid of home region
 //
 function  opensim_get_avatars_infos($condition="", &$db=null)
 {
@@ -341,7 +340,7 @@ function  opensim_get_avatars_infos($condition="", &$db=null)
 	}
 	else if ($db->exist_table("users")) {
 		//$db->query("SELECT UUID,username,lastname,created,lastLogin,homeRegion FROM users ".$condition);
-		$db->query("SELECT users.UUID,username,lastname,created,lastLogin,regions.uuid FROM users, regions where homeRegion=regionHandle ".$condition;
+		$db->query("SELECT users.UUID,username,lastname,created,lastLogin,regions.uuid FROM users JOIN regions ON homeRegion=regionHandle ".$condition;
 	}
 	else {
 		if ($flg) $db->close();
@@ -718,6 +717,21 @@ function  opensim_get_region_info($region, &$db=null)
 //
 // Attention: When call this function, please check $condition for prevention of SQL Injection.
 //
+//	return:
+//		$rginfos[$UUID]['UUID']		  	 ... UUID
+//		$rginfos[$UUID]['regionName'] 	 ... name of region
+//		$rginfos[$UUID]['locX']		  	 ... location X
+//		$rginfos[$UUID]['locY']		  	 ... location Y
+//		$rginfos[$UUID]['serverIP']	  	 ... IP address of server
+//		$rginfos[$UUID]['serverPort'] 	 ... port num of server
+//		$rginfos[$UUID]['serverURI']  	 ... URI of server
+//		$rginfos[$UUID]['owner_uuid'] 	 ... UUID of region owner
+//		$rginfos[$UUID]['estate_id'] 	 ... ID of estate
+//		$rginfos[$UUID]['estate_owner']  ... UUID of estate owner
+//		$rginfos[$UUID]['est_firstname'] ... first name
+//		$rginfos[$UUID]['est_lastname']  ... last name
+//		$rginfos[$UUID]['est_fullname']  ... full name
+//
 function  opensim_get_regions_infos($condition="", &$db=null)
 {
 	$flg = false;
@@ -757,8 +771,8 @@ function  opensim_get_regions_infos($condition="", &$db=null)
 			$rginfos[$UUID]['locX']		  	= $locX;
 			$rginfos[$UUID]['locY']		  	= $locY;
 			$rginfos[$UUID]['serverIP']	  	= $serverIP;
-			$rginfos[$UUID]['serverURI']  	= $serverURI;
 			$rginfos[$UUID]['serverPort'] 	= $serverPort;
+			$rginfos[$UUID]['serverURI']  	= $serverURI;
 			$rginfos[$UUID]['owner_uuid'] 	= $owneruuid;
 			$rginfos[$UUID]['estate_id'] 	= $estateid;
 			$rginfos[$UUID]['estate_owner'] = $estateowner;
