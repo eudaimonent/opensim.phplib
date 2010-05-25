@@ -17,38 +17,46 @@
  function  opensim_get_db_version(&$db=null)
  function  opensim_check_db(&$db=null)
 
- function  opensim_get_avatar_num(&$db=null)
  function  opensim_get_avatar_name($uuid, &$db=null)
+ function  opensim_get_avatar_uuid($name, &$db=null)
  function  opensim_get_avatar_info($uuid, &$db=null)
+ function  opensim_get_avatar_online($uuid, &$db=null)
+
+ function  opensim_get_avatars_num(&$db=null)
  function  opensim_get_avatars_infos($condition="", &$db=null)
  function  opensim_get_avatars_profiles_from_users($condition="", &$db=null)
- function  opensim_get_avatar_online($uuid, &$db=null)
+
  function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, &$db=null)
  function  opensim_delete_avatar($uuid, &$db=null)
-
- function  opensim_get_region_num(&$db=null)
+ 
  function  opensim_get_region_name($region, &$db=null)
+ function  opensim_get_region_name_by_id($id, &$db=null)
+ function  opensim_get_region_uuid($name, &$db=null)
  function  opensim_get_region_info($region, &$db=null)
+
+ function  opensim_get_regions_num(&$db=null)
  function  opensim_get_regions_names($condition="", &$db=null)
  function  opensim_get_regions_infos($condition="", &$db=null)
- function  opensim_get_region_name_by_id($id, &$db=null)
 
  function  opensim_get_region_owner($region, &$db=null)
- function  opensim_set_region_owner($region, $woner_uuid, &$db=null)
+ function  opensim_set_region_owner($region, $owner, &$db=null)
+
  function  opensim_create_inventory_folders($uuid, &$db=null)
  function  opensim_set_home_region($uuid, $hmregion, $pos_x="128", $pos_y="128", $pos_z="0", &$db=null)
 
  function  opensim_get_password($uuid, $tbl="", &$db=null)
  function  opensim_set_password($uuid, $passwdhash, $passwdsalt="", $tbl="", &$db=null)
  function  opensim_supply_passwordSalt(&$db=null)
- function  opensim_succession_presence(&$db=null)
 
- function  opensim_succession_data($region_nmae, &$db=null)
+ function  opensim_succession_agents_to_griduser($region_id, &$db=null)
+ function  opensim_succession_useraccounts_to_griduser($region_id, &$db=null)
+ function  opensim_succession_data($region_name, &$db=null)
+
  function  opensim_recreate_presence(&$db=null)
 
  function  opensim_get_voice_mode($region, &$db=null)
  function  opensim_set_voice_mode($region, $mode, &$db=null)
-
+ 
  *********************************************************************************/
 
 
@@ -142,7 +150,7 @@ function  opensim_check_db(&$db=null)
 // for Avatar
 //
 
-function  opensim_get_avatar_num(&$db=null)
+function  opensim_get_avatars_num(&$db=null)
 {
 	$num = 0;
 
@@ -204,6 +212,38 @@ function  opensim_get_avatar_name($uuid, &$db=null)
 	$name['fullname']  = $fullname;
 
 	return $name;
+}
+
+
+
+function  opensim_get_avatar_uuid($name, &$db=null)
+{
+	if (!isAlphabetNumericSpecial($name)) return false;
+
+	$avatar_name = explode(" ", $name);
+	$firstname = $avatar_name[0];
+	$lastname  = $avatar_name[1];
+	if ($firstname=="" or $lastname=="") return false;
+
+	$flg = false;
+	if (!is_object($db)) {
+		$db  = new DB;
+		$flg = true;
+	}
+	
+	$uuid = null;
+	if ($db->exist_table("UserAccounts")) {
+		$db->query("SELECT PrincipalID FROM UserAccounts WHERE FirstName='$firstname' and LastName='$lastname'");
+		list($uuid) = $db->next_record();
+	}
+	else if ($db->exist_table("users")) {
+		$db->query("SELECT FROM users WHERE username='$firstname' and lastname='$lastname'");
+		list($uuid) = $db->next_record();
+	}
+
+	if ($flg) $db->close();
+
+	return $uuid;
 }
 
 
@@ -526,7 +566,7 @@ function  opensim_delete_avatar($uuid, &$db=null)
 // for Region
 //
 
-function  opensim_get_region_num(&$db=null)
+function  opensim_get_regions_num(&$db=null)
 {
 	$num = 0;
 
@@ -541,6 +581,29 @@ function  opensim_get_region_num(&$db=null)
 	if ($flg) $db->close();
 
 	return $num;
+}
+
+
+
+function  opensim_get_region_uuid($name, &$db=null)
+{
+	if (!isAlphabetNumericSpecial($name)) return false;
+
+	$flg = false;
+	if (!is_object($db)) {
+		$db  = new DB;
+		$flg = true;
+	}
+
+	$uuid = "";
+	if ($name!="") {
+		$db->query("SELECT uuid FROM regions WHERE regionName='$name'");
+		list($uuid) = $db->next_record();
+	}
+  
+	if ($flg) $db->close();
+
+	return $uuid;
 }
 
 
@@ -1195,8 +1258,7 @@ function  opensim_succession_data($region_name, &$db=null)
 
 	$region_id = "";
 	if ($region_name!="") {
-		$db->query("SELECT uuid FROM regions WHERE regionName='$region_name'");
-		list($region_id) = $db->next_record();
+		$region_id = opensim_get_region_uuid($region_name);
 	}
 	if ($region_id=="") $region_id = "00000000-0000-0000-0000-000000000000";
 
