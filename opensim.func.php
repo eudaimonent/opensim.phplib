@@ -315,6 +315,15 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 //
 // Attention: When call this function, please check $condition for prevention of SQL Injection.
 //
+// return:
+//		$avinfos[$UUID]['UUID']	     ... UUID
+//		$avinfos[$UUID]['firstname'] ... firstname
+//		$avinfos[$UUID]['lastname']  ... lastname
+//		$avinfos[$UUID]['created']   ... created time
+//		$avinfos[$UUID]['lastlogin'] ... lastlogin time
+//		$avinfos[$UUID]['hmregion']  ... uuid of Region
+//
+//
 function  opensim_get_avatars_infos($condition="", &$db=null)
 {
 	$flg = false;
@@ -325,11 +334,14 @@ function  opensim_get_avatars_infos($condition="", &$db=null)
 	$avinfos = array();
 	
 	if ($db->exist_table("GridUser")) {
+		//$db->query("SELECT PrincipalID,FirstName,LastName,Created,Login,homeRegionID FROM UserAccounts ".
+		//					"LEFT JOIN GridUser ON PrincipalID=UserID AND Logout!='0' ".$condition);
 		$db->query("SELECT PrincipalID,FirstName,LastName,Created,Login,homeRegionID FROM UserAccounts ".
-							"LEFT JOIN GridUser ON PrincipalID=UserID AND Logout!='0' ".$condition);
+							"LEFT JOIN GridUser ON PrincipalID=UserID ".$condition);
 	}
 	else if ($db->exist_table("users")) {
-		$db->query("SELECT UUID,username,lastname,created,lastLogin,homeRegion FROM users ".$condition);
+		//$db->query("SELECT UUID,username,lastname,created,lastLogin,homeRegion FROM users ".$condition);
+		$db->query("SELECT users.UUID,username,lastname,created,lastLogin,regions.uuid FROM users, regions where homeRegion=regionHandle ".$condition;
 	}
 	else {
 		if ($flg) $db->close();
