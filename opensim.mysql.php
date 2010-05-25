@@ -6,7 +6,7 @@
  *
  *			supported versions of OpenSim are 0.6.7, 0.6.8, 0.6.9 and 0.7Dev
  *			tools.func.php is needed
- *			opensim.mysql.php is needed
+ *			mysql.func.php is needed
  *
  *********************************************************************************/
 
