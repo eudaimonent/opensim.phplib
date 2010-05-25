@@ -340,7 +340,7 @@ function  opensim_get_avatars_infos($condition="", &$db=null)
 	}
 	else if ($db->exist_table("users")) {
 		//$db->query("SELECT UUID,username,lastname,created,lastLogin,homeRegion FROM users ".$condition);
-		$db->query("SELECT users.UUID,username,lastname,created,lastLogin,regions.uuid FROM users JOIN regions ON homeRegion=regionHandle ".$condition;
+		$db->query("SELECT users.UUID,username,lastname,created,lastLogin,regions.uuid FROM users JOIN regions ON homeRegion=regionHandle ".$condition);
 	}
 	else {
 		if ($flg) $db->close();
