@@ -888,7 +888,7 @@ function  opensim_set_home_region($uuid, $hmregion, $pos_x="128", $pos_y="128", 
 	if ($errno==0) {
 		list($regionID, $regionHandle) = $db->next_record();
 
-		if ($db->exist_table("Griduser")) {
+		if ($db->exist_table("GridUser")) {
 			$homePosition = "<$pos_x,$pos_y,$pos_z>";
 			$db->query("UPDATE GridUser SET HomeRegionID='$regionID',HomePosition='$homePosition' WHERE UserID='$uuid'");
 			$errno = $db->Errno;
