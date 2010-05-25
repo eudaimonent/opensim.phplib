@@ -1,6 +1,6 @@
 <?php
 /*********************************************************************************
- * opensim.func.php v1.0.0 for OpenSim 	by Fumi.Iseki  2010 5/13
+ * opensim.mysql.php v1.0.0 for OpenSim 	by Fumi.Iseki  2010 5/13
  *
  * 			Copyright (c) 2009, 2010   http://www.nsl.tuis.ac.jp/
  *
@@ -68,7 +68,7 @@
 //
 
 require_once(CMS_MODULE_PATH."/include/tools.func.php");
-require_once(CMS_MODULE_PATH."/include/opensim.mysql.php");
+require_once(CMS_MODULE_PATH."/include/mysql.func.php");
 
 
 
