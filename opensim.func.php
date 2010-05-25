@@ -81,18 +81,12 @@ require_once(CMS_MODULE_PATH."/include/opensim.mysql.php");
 
 function  opensim_get_db_version(&$db=null)
 {
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$ver = "0.0";
 	if ($db->exist_table("GridUser"))  $ver = "0.7";
 	else if ($db->exist_table("users"))$ver = "0.6";
 	if ($db->Errno!=0) $ver = "0.0";
-
-	if ($flg) $db->close();
 
 	return $ver;
 }
@@ -107,11 +101,7 @@ function  opensim_check_db(&$db=null)
 	$ret['user_count']       = 0;
 	$ret['region_count']     = 0;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$db->query("SELECT COUNT(*) FROM regions");
 	if ($db->Errno==0) {
@@ -137,8 +127,6 @@ function  opensim_check_db(&$db=null)
 		}
 	}
 
-	if ($flg) $db->close();
-
 	return $ret;
 }
 
@@ -154,11 +142,7 @@ function  opensim_get_avatars_num(&$db=null)
 {
 	$num = 0;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	if ($db->exist_table("UserAccounts")) {
 		$db->query("SELECT COUNT(*) FROM UserAccounts");
@@ -171,8 +155,6 @@ function  opensim_get_avatars_num(&$db=null)
 	else {
 		$num = -1;
 	}
-
-	if ($flg) $db->close();
 
 	return $num;
 }
@@ -187,11 +169,7 @@ function  opensim_get_avatar_name($uuid, &$db=null)
 	$lastname  = null;
 	$fullname  = null;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 	
 	if ($db->exist_table("UserAccounts")) {
 		$db->query("SELECT FirstName,LastName FROM UserAccounts WHERE PrincipalID='$uuid'");
@@ -202,7 +180,6 @@ function  opensim_get_avatar_name($uuid, &$db=null)
 		list($firstname, $lastname) = $db->next_record();
 	}
 
-	if ($flg) $db->close();
 
 	$fullname = $firstname." ".$lastname;
 	if ($fullname==" ") $fullname = null;
@@ -225,11 +202,7 @@ function  opensim_get_avatar_uuid($name, &$db=null)
 	$lastname  = $avatar_name[1];
 	if ($firstname=="" or $lastname=="") return false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 	
 	$uuid = null;
 	if ($db->exist_table("UserAccounts")) {
@@ -241,8 +214,6 @@ function  opensim_get_avatar_uuid($name, &$db=null)
 		list($uuid) = $db->next_record();
 	}
 
-	if ($flg) $db->close();
-
 	return $uuid;
 }
 
@@ -252,11 +223,8 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 {
 	if (!isGUID($uuid)) return null;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
+
 	$online = false;
 	$profileTXT = "";
 
@@ -282,11 +250,8 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 		if ($agentOnline==1) $online = true;
 	}
 	else {
-		if ($flg) $db->close();
 		return null;
 	}
-
-	if ($flg) $db->close();
 
 
 	$fullname = $firstname." ".$lastname;
@@ -325,11 +290,8 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 //
 function  opensim_get_avatars_infos($condition="", &$db=null)
 {
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
+
 	$avinfos = array();
 	
 	if ($db->exist_table("GridUser")) {
@@ -343,7 +305,6 @@ function  opensim_get_avatars_infos($condition="", &$db=null)
 		$db->query("SELECT users.UUID,username,lastname,created,lastLogin,regions.uuid FROM users JOIN regions ON homeRegion=regionHandle ".$condition);
 	}
 	else {
-		if ($flg) $db->close();
 		return null;
 	}
 
@@ -357,7 +318,6 @@ function  opensim_get_avatars_infos($condition="", &$db=null)
 			$avinfos[$UUID]['hmregion']  = $hmregion;
 		}
 	}			  
-	if ($flg) $db->close();
 
 	return $avinfos;
 }
@@ -369,11 +329,8 @@ function  opensim_get_avatars_infos($condition="", &$db=null)
 //
 function  opensim_get_avatars_profiles_from_users($condition="", &$db=null)
 {
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
+
 	$profs = null;
 
 	if ($db->exist_table("users")) {
@@ -394,7 +351,6 @@ function  opensim_get_avatars_profiles_from_users($condition="", &$db=null)
 			}
 		}
 	}
-	if ($flg) $db->close();
 
 	return $profs;
 }
@@ -405,11 +361,8 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 {
 	if (!isGUID($uuid)) return null;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
+
 	$online = false;
 	$region = "00000000-0000-0000-0000-000000000000";
 
@@ -428,8 +381,6 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 		}
 	}
 
-	if ($flg) $db->close();
-
 	$ret['online'] = $online;
 	$ret['region'] = $region;
 	return $ret;
@@ -445,11 +396,7 @@ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregi
 	if (!isAlphabetNumericSpecial($passwd))     return false;
 	if (!isAlphabetNumericSpecial($homeregion)) return false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$nulluuid   = "00000000-0000-0000-0000-000000000000";
 	$passwdsalt = make_random_hash();
@@ -510,8 +457,6 @@ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregi
 		}
 	}
 
-	if ($flg) $db->close();
-
 	if ($errno!=0) return false;
 	return true;
 }
@@ -525,11 +470,7 @@ function  opensim_delete_avatar($uuid, &$db=null)
 {
 	if (!isGUID($uuid)) return false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	if ($db->exist_table("UserAccounts")) {
 		$db->query("DELETE FROM UserAccounts WHERE PrincipalID='$uuid'");
@@ -539,7 +480,6 @@ function  opensim_delete_avatar($uuid, &$db=null)
 		$db->query("DELETE FROM tokens       WHERE UUID='$uuid'");
 		if ($db->exist_table("Presence")) $db->query("DELETE FROM Presence WHERE UserID='$uuid'");
 		if ($db->exist_table("GridUser")) $db->query("DELETE FROM GridUser WHERE UserID='$uuid'");
-
 	}
 
 	if ($db->exist_table("users")) {
@@ -564,7 +504,6 @@ function  opensim_delete_avatar($uuid, &$db=null)
 		$db->query("DELETE FROM balances WHERE user LIKE '".$uuid."@%'");
 		$db->query("DELETE FROM userinfo WHERE user LIKE '".$uuid."@%'");
 	}
-	if ($flg) $db->close();
 
 	return true;
 }
@@ -581,15 +520,10 @@ function  opensim_get_regions_num(&$db=null)
 {
 	$num = 0;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$db->query("SELECT COUNT(*) FROM regions");
 	list($num) = $db->next_record();
-	if ($flg) $db->close();
 
 	return $num;
 }
@@ -600,11 +534,7 @@ function  opensim_get_region_uuid($name, &$db=null)
 {
 	if (!isAlphabetNumericSpecial($name)) return false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$uuid = "";
 	if ($name!="") {
@@ -612,8 +542,6 @@ function  opensim_get_region_uuid($name, &$db=null)
 		list($uuid) = $db->next_record();
 	}
   
-	if ($flg) $db->close();
-
 	return $uuid;
 }
 
@@ -623,15 +551,10 @@ function  opensim_get_region_name($region, &$db=null)
 {
 	if (!isGUID($region)) return null;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$db->query("SELECT regionName FROM regions WHERE uuid='$region'");
 	list($regionName) = $db->next_record();
-	if ($flg) $db->close();
 
 	return $regionName;
 }
@@ -643,18 +566,13 @@ function  opensim_get_region_name($region, &$db=null)
 //
 function  opensim_get_regions_names($condition="", &$db=null)
 {
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$regions = array();
 	$db->query("SELECT regionName FROM regions ".$condition);
 	while ($db->Errno==0 and list($region)=$db->next_record()) {
 		$regions[] = $region;
 	}
-	if ($flg) $db->close();
 
 	return $regions;
 }
@@ -665,11 +583,7 @@ function  opensim_get_region_name_by_id($id, &$db=null)
 {
 	if (!isGUID($id) and !isNumeric($id)) return null;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	if (isGUID($id)) {
 		$db->query("SELECT regionName FROM regions WHERE uuid='$id'");
@@ -680,8 +594,6 @@ function  opensim_get_region_name_by_id($id, &$db=null)
 		list($regionName) = $db->next_record();
 	}
 
-	if ($flg) $db->close();
-
 	return $regionName;
 }
 
@@ -691,16 +603,11 @@ function  opensim_get_region_info($region, &$db=null)
 {
 	if (!isGUID($region)) return null;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$db->query("SELECT regionName,serverIP,serverHttpPort,serverURI,locX,locY FROM regions WHERE uuid='$region'");
 	list($regionName, $serverIP, $serverHttpPort, $serverURI, $locX, $locY) = $db->next_record();
     $rginfo = opensim_get_region_owner($region, $db);
-	if ($flg) $db->close();
 
 	$rginfo['regionName'] 	  = $regionName;
 	$rginfo['serverIP'] 	  = $serverIP;
@@ -734,11 +641,8 @@ function  opensim_get_region_info($region, &$db=null)
 //
 function  opensim_get_regions_infos($condition="", &$db=null)
 {
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
+
 	$rginfos = array();
 
 	$items = " regions.uuid,regionName,locX,locY,serverIP,serverURI,serverHttpPort,owner_uuid,estate_map.EstateID,EstateOwner,";
@@ -756,7 +660,6 @@ function  opensim_get_regions_infos($condition="", &$db=null)
 		$frmwh = " FROM users WHERE users.UUID=";
 	}
 	else {
-		if ($flg) $db->close();
 		return null;
 	}
 
@@ -800,8 +703,6 @@ function  opensim_get_regions_infos($condition="", &$db=null)
 		}
 	}
 
-	if ($flg) $db->close();
-
 	return $rginfos;
 }
 
@@ -826,11 +727,7 @@ function  opensim_get_region_owner($region, &$db=null)
 	$fullname  = null;
 	$owneruuid = null;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 	
 	if ($db->exist_table("UserAccounts")) {
 		$rqdt = "PrincipalID,FirstName,LastName";
@@ -843,13 +740,11 @@ function  opensim_get_region_owner($region, &$db=null)
 		$cndn = "RegionID='$region' AND estate_map.EstateID=estate_settings.EstateID AND EstateOwner=UUID";
 	}
 	else {
-		if ($flg) $db->close();
 		return null;
 	}
 
 	$db->query("SELECT ".$rqdt." FROM ".$tbls." WHERE ".$cndn);
 	list($owneruuid, $firstname, $lastname) = $db->next_record();
-	if ($flg) $db->close();
 
 	$fullname = $firstname." ".$lastname;
 	if ($fullname==" ") $fullname = null;
@@ -869,17 +764,11 @@ function  opensim_set_region_owner($region, $owner, &$db=null)
 	if (!isGUID($region)) return false;
 	if (!isGUID($owner))  return false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$db->query("UPDATE estate_settings,estate_map SET EstateOwner='$owner' WHERE estate_settings.EstateID=estate_map.EstateID AND RegionID='$region'");
 	$errno = $db->Errno;
 	if ($errno==0) $db->query("UPDATE regions SET owner_uuid='$owner' WHERE uuid='$region'");
-
-	if ($flg) $db->close();
 
 	if ($errno!=0) return false;
 	return true;
@@ -897,11 +786,7 @@ function  opensim_create_inventory_folders($uuid, &$db=null)
 {
 	if (!isGUID($uuid)) return 999;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 	
 	$my_inventory = make_random_guid();
 	$db->query("INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) ".
@@ -979,7 +864,6 @@ function  opensim_create_inventory_folders($uuid, &$db=null)
 		$errno = $db->Errno;
 	}
 
-	if ($flg) $db->close();
 	return $errno;
 }
 
@@ -997,11 +881,7 @@ function  opensim_set_home_region($uuid, $hmregion, $pos_x="128", $pos_y="128", 
 	if (!isAlphabetNumericSpecial($hmregion)) return false;
 	if (!isNumeric($pos_x) or !isNumeric($pos_y) or !isNumeric($pos_z)) return false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$db->query("SELECT uuid,regionHandle FROM regions WHERE regionName='$hmregion'");
 	$errno = $db->Errno;
@@ -1022,7 +902,6 @@ function  opensim_set_home_region($uuid, $hmregion, $pos_x="128", $pos_y="128", 
 			}
 		}
 	}
-	if ($flg) $db->close();
 
 	if ($errno!=0) return false;
 	return true;
@@ -1043,11 +922,7 @@ function  opensim_get_password($uuid, $tbl="", &$db=null)
 	$passwdhash = null;
 	$passwdsalt = null;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	if ($tbl=="" or $tbl=="auth") {
 		if ($db->exist_table("auth")) {
@@ -1064,8 +939,6 @@ function  opensim_get_password($uuid, $tbl="", &$db=null)
 			}
 		}
 	}
-
-	if ($flg) $db->close();
 
 	$ret['passwordHash'] = $passwdhash;
 	$ret['passwordSalt'] = $passwdsalt;
@@ -1086,11 +959,7 @@ function  opensim_set_password($uuid, $passwdhash, $passwdsalt="", $tbl="", &$db
 		$setpasswd .= ",passwordSalt='$passwdsalt'";
 	}
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$errno = 0;
 	if ($tbl=="" or $tbl=="auth") {
@@ -1109,8 +978,6 @@ function  opensim_set_password($uuid, $passwdhash, $passwdsalt="", $tbl="", &$db
 		}
 	}
 
-	if ($flg) $db->close();
-
 	if ($errno!=0) return false;
 	return true;
 }
@@ -1125,20 +992,16 @@ function  opensim_set_password($uuid, $passwdhash, $passwdsalt="", $tbl="", &$db
 
 function  opensim_supply_passwordSalt(&$db=null)
 {
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
-	$dbup = new DB;
+	$dp2 = new DB;
 	if ($db->exist_table('auth')) {
 		$db->query("SELECT UUID,passwordHash,passwordSalt FROM auth");
 		while ($data = $db->next_record()) {
 			if ($data['passwordSalt']=="") {
 				$passwdSalt = make_random_hash();
 				$passwdHash = md5($data['passwordHash'].":".$passwdSalt);
-				opensim_set_password($data['UUID'], $passwdHash, $passwdSalt, "auth", $dbup);
+				opensim_set_password($data['UUID'], $passwdHash, $passwdSalt, "auth", $db2);
 			}
 		}
 	}
@@ -1149,14 +1012,11 @@ function  opensim_supply_passwordSalt(&$db=null)
 			if ($data['passwordSalt']=="") {
 				$passwdSalt = make_random_hash();
 				$passwdHash = md5($data['passwordHash'].":".$passwdSalt);
-				opensim_set_password($data['UUID'], $passwdHash, $passwdSalt, "users", $dbup);
+				opensim_set_password($data['UUID'], $passwdHash, $passwdSalt, "users", $db2);
 			}
 		}
 	}
 
-	//$dbup->close();
-
-	if ($flg) $db->close();
 	return;
 }
 
@@ -1168,11 +1028,7 @@ function  opensim_succession_agents_to_griduser($region_id, &$db=null)
 {
 	if (!isGUID($region_id)) return false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$db->query("SELECT agents.UUID,currentRegion,loginTime,logoutTime,homeRegion,".
 								"homeLocationX,homeLocationY,homeLocationZ FROM agents,users WHERE agents.UUID=users.UUID");
@@ -1209,8 +1065,6 @@ function  opensim_succession_agents_to_griduser($region_id, &$db=null)
 			}
 		}
 	}
-	//$db2->close();	// should not be close!!
-	if ($flg) $db->close();
 
 	if ($errno!=0) return false;
 	return true;
@@ -1222,11 +1076,7 @@ function  opensim_succession_useraccounts_to_griduser($region_id, &$db=null)
 {
 	if (!isGUID($region_id)) return false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$db->query("SELECT PrincipalID FROM UserAccounts");
 	$errno = $db->Errno;
@@ -1252,8 +1102,6 @@ function  opensim_succession_useraccounts_to_griduser($region_id, &$db=null)
 			}
 		}
 	}
-	//$db2->close();	// should not be close!!
-	if ($flg) $db->close();
 
 	if ($errno!=0) return false;
 	return true;
@@ -1272,11 +1120,7 @@ function  opensim_succession_data($region_name, &$db=null)
 {
 	if (!isAlphabetNumericSpecial($region_name, true)) return false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$exist_agents   = $db->exist_table("agents");
 	$exist_griduser = $db->exist_table("GridUser");
@@ -1296,7 +1140,6 @@ function  opensim_succession_data($region_name, &$db=null)
 		opensim_succession_useraccounts_to_griduser($region_id, $db);
 	}
 
-	if ($flg) $db->close();
 	return;
 }
 
@@ -1306,11 +1149,7 @@ function  opensim_succession_data($region_name, &$db=null)
 //
 function  opensim_recreate_presence(&$db=null)
 {
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	if ($db->exist_field("Presence", "HomeRegionID")) {
 		$db->query("DROP TABLE Presence");
@@ -1318,7 +1157,6 @@ function  opensim_recreate_presence(&$db=null)
 	}
 	// Creation is automatic by ROBUST server. 
 
-	if ($flg) $db->close();
 	return;
 }
 
@@ -1334,18 +1172,14 @@ function  opensim_get_voice_mode($region, &$db=null)
 {
 	if (!isGUID($region)) return -1;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
+
 	$voiceflag = 0x60000000;
 
 	$db->query("SELECT LandFlags FROM land WHERE RegionUUID='$region'");
 	while (list($flag) = $db->next_record()) {
 		$voiceflag &= $flag;
 	}
-	if ($flg) $db->close();
 
 	if      ($voiceflag==0x20000000) return 1;
 	else if ($voiceflag==0x40000000) return 2;
@@ -1359,11 +1193,7 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 	if (!isGUID($region)) false;
 	if (!preg_match("/^[0-2]$/", $mode)) false;
 
-	$flg = false;
-	if (!is_object($db)) {
-		$db  = new DB;
-		$flg = true;
-	}
+	if (!is_object($db)) $db = new DB;
 
 	$colum = 0;
 	$vflags = array();
@@ -1384,7 +1214,6 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 		$flag = $vflag['flag'];
 		$db->query("UPDATE land SET LandFlags='$flag' WHERE UUID='$UUID'");
 	}
-	if ($flg) $db->close();
 
 	return true;
 }	
