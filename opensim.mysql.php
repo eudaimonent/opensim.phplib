@@ -269,7 +269,6 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 	$avinfo['serverIP'] 	  = $serverIP;
 	$avinfo['serverHttpPort'] = $serverHttpPort;
 	$avinfo['serverURI'] 	  = $serverURI;
-	$avinfo['agentOnline']	  = $agentOnline;
 	$avinfo['profileTXT']	  = $profileTXT;
 
 	return $avinfo;
