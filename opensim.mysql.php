@@ -365,7 +365,15 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 	$online = false;
 	$region = "00000000-0000-0000-0000-000000000000";
 
-	if ($db->exist_table("GridUser")) {
+
+	if ($db->exist_field("Presence", "Online")) {
+		$db->query("SELECT Online,RegionID FROM Presence WHERE UserID='$uuid'");
+		if ($db->Errno==0) {
+			list($onln, $region) = $db->next_record();
+			if ($onln=="true") $online = true;
+		}
+	}
+	else if ($db->exist_table("GridUser")) {
 		$db->query("SELECT Online,LastRegionID FROM GridUser WHERE UserID='$uuid'");
 		if ($db->Errno==0) {
 			list($onln, $region) = $db->next_record();
