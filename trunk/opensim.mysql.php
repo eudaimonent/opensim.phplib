@@ -42,6 +42,7 @@
  function  opensim_set_region_owner($region, $owner, &$db=null)
 
  function  opensim_create_inventory_folders($uuid, &$db=null)
+ function  opensim_get_home_region($uuid, &$db=null)
  function  opensim_set_home_region($uuid, $hmregion, $pos_x="128", $pos_y="128", $pos_z="0", &$db=null)
 
  function  opensim_get_password($uuid, $tbl="", &$db=null)
@@ -881,6 +882,27 @@ function  opensim_create_inventory_folders($uuid, &$db=null)
 //
 // for Home Region
 //
+
+function  opensim_get_home_region($uuid, &$db=null)
+{
+	if (!isGUID($uuid)) return null;
+
+	if (!is_object($db)) $db = new DB;
+
+	$region_name = "";
+	if ($db->exist_table("GridUser")) {
+		$db->query("SELECT regionName FROM GridUser,regions WHERE HomeRegionID=uuid AND UserID='$uuid'");
+		list($region_name) = $db->next_record();
+	}
+	else if ($db->exist_table("users")) {
+		$db->query("SELECT regionName FROM users,regions WHERE homeRegionID=regions.uuid AND users.UUID='$uuid'");
+		list($region_name) = $db->next_record();
+	}
+
+	return $region_name;
+}
+
+
 
 function  opensim_set_home_region($uuid, $hmregion, $pos_x="128", $pos_y="128", $pos_z="0", &$db=null)
 {
