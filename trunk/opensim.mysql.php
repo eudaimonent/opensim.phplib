@@ -663,7 +663,7 @@ function  opensim_get_regions_infos($condition="", &$db=null)
 		$frmwh = " FROM UserAccounts WHERE UserAccounts.PrincipalID=";
 	}
 	else if ($db->exist_table("users")) {
-		$unmae = "username,lastname ";
+		$uname = "username,lastname ";
 		$join3 = " LEFT JOIN users ON EstateOwner=users.UUID ";
 		$frmwh = " FROM users WHERE users.UUID=";
 	}
