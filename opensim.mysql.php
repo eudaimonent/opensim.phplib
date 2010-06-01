@@ -226,7 +226,7 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 
 	if (!is_object($db)) $db = new DB;
 
-	$online = false;
+	//$online = false;
 	$profileTXT = "";
 
 	if ($db->exist_table("GridUser")) {
@@ -237,18 +237,18 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 		list($UUID, $firstname, $lastname, $regionUUID, $created, $lastlogin) = $db->next_record();
 		$db->query("SELECT regionName,serverIP,serverHttpPort,serverURI FROM regions WHERE uuid='$regionUUID'");
 		list($regionName, $serverIP, $serverHttpPort, $serverURI) = $db->next_record();
-		$db->query("SELECT Online FROM GridUser WHERE UserID='$UUID'");
-		list($agentOnline) = $db->next_record();
-		if ($agentOnline=="True") $online = true;
+		//$db->query("SELECT Online FROM GridUser WHERE UserID='$UUID'");
+		//list($agentOnline) = $db->next_record();
+		//if ($agentOnline=="True") $online = true;
 	}
 	else if ($db->exist_table("users")) {
 		$db->query("SELECT UUID,username,lastname,homeRegion,created,lastLogin,profileAboutText FROM users WHERE uuid='$uuid'");
 		list($UUID, $firstname, $lastname, $rgnHandle, $created, $lastlogin, $profileTXT ) = $db->next_record();
 		$db->query("SELECT uuid,regionName,serverIP,serverHttpPort,serverURI FROM regions WHERE regionHandle='$rgnHandle'");
 		list($regionUUID, $regionName, $serverIP, $serverHttpPort, $serverURI) = $db->next_record();
-		$db->query("SELECT agentOnline FROM agents WHERE UUID='$UUID'");
-		list($agentOnline) = $db->next_record();
-		if ($agentOnline==1) $online = true;
+		//$db->query("SELECT agentOnline FROM agents WHERE UUID='$UUID'");
+		//list($agentOnline) = $db->next_record();
+		//if ($agentOnline==1) $online = true;
 	}
 	else {
 		return null;
@@ -264,13 +264,13 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 	$avinfo['fullname']   	  = $fullname;
 	$avinfo['created'] 		  = $created;
 	$avinfo['lastlogin'] 	  = $lastlogin;
-	$avinfo['online'] 	  	  = $online;
 	$avinfo['regionUUID'] 	  = $regionUUID;
 	$avinfo['regionName'] 	  = $regionName;
 	$avinfo['serverIP'] 	  = $serverIP;
 	$avinfo['serverHttpPort'] = $serverHttpPort;
 	$avinfo['serverURI'] 	  = $serverURI;
 	$avinfo['profileTXT']	  = $profileTXT;
+	//$avinfo['online'] 	  	  = $online;
 
 	return $avinfo;
 }
@@ -365,20 +365,25 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 
 	$online = false;
 	$region = "00000000-0000-0000-0000-000000000000";
+	$rgn_name = "";
 
 
 	if ($db->exist_field("Presence", "Online")) {
 		$db->query("SELECT Online,RegionID FROM Presence WHERE UserID='$uuid'");
 		if ($db->Errno==0) {
 			list($onln, $region) = $db->next_record();
-			if ($onln=="true") $online = true;
+			if ($onln=="true") {
+				$rgn_name = opensim_get_region_name_by_id($region);
+				if ($rgn_name!="") $online = true;
+			}
 		}
 	}
 	else if ($db->exist_table("Presence")) {
 		$db->query("SELECT RegionID FROM Presence WHERE UserID='$uuid'");
 		if ($db->Errno==0) {
 			list($region) = $db->next_record();
-			if ($region!="") $online = true;
+			$rgn_name = opensim_get_region_name_by_id($region);
+			if ($rgn_name!="") $online = true;
 		}
 	}
 /*
@@ -386,7 +391,9 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 		$db->query("SELECT Online,LastRegionID FROM GridUser WHERE UserID='$uuid'");
 		if ($db->Errno==0) {
 			list($onln, $region) = $db->next_record();
-			if ($onln=="True") $online = true;
+			if ($onln=="True") {
+				$rgn_name = opensim_get_region_name_by_id($region);
+				if ($rgn_name!="") $online = true;
 		}
 	}
 */
@@ -394,12 +401,16 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 		$db->query("SELECT agentOnline,currentRegion FROM agents WHERE UUID='$uuid' AND logoutTime='0'");
 		if ($db->Errno==0) {
 			list($onln, $region) = $db->next_record();
-			if ($onln==1) $online = true;
+			if ($onln=='1') {
+				$rgn_name = opensim_get_region_name_by_id($region);
+				if ($rgn_name!="") $online = true;
+			}
 		}
 	}
 
-	$ret['online'] = $online;
-	$ret['region'] = $region;
+	$ret['online'] 		= $online;
+	$ret['region_id'] 	= $region;
+	$ret['region_name'] = $rgn_name;
 	return $ret;
 }                 
 
