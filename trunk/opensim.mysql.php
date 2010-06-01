@@ -211,7 +211,7 @@ function  opensim_get_avatar_uuid($name, &$db=null)
 		list($uuid) = $db->next_record();
 	}
 	else if ($db->exist_table("users")) {
-		$db->query("SELECT FROM users WHERE username='$firstname' and lastname='$lastname'");
+		$db->query("SELECT UUID FROM users WHERE username='$firstname' and lastname='$lastname'");
 		list($uuid) = $db->next_record();
 	}
 
