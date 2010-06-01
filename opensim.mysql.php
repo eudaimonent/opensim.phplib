@@ -374,6 +374,14 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 			if ($onln=="true") $online = true;
 		}
 	}
+	else if ($db->exist_table("Presence")) {
+		$db->query("SELECT RegionID FROM Presence WHERE UserID='$uuid'");
+		if ($db->Errno==0) {
+			list($region) = $db->next_record();
+			if ($region!="") $online = true;
+		}
+	}
+/*
 	else if ($db->exist_table("GridUser")) {
 		$db->query("SELECT Online,LastRegionID FROM GridUser WHERE UserID='$uuid'");
 		if ($db->Errno==0) {
@@ -381,6 +389,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 			if ($onln=="True") $online = true;
 		}
 	}
+*/
 	else if ($db->exist_table("agents")) {
 		$db->query("SELECT agentOnline,currentRegion FROM agents WHERE UUID='$uuid' AND logoutTime='0'");
 		if ($db->Errno==0) {
