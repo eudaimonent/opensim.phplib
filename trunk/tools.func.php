@@ -29,7 +29,7 @@
 function  isNumeric($str, $nullok=false)
 {
 	if ($str==null) return $nullok;
-	if (!preg_match("/^[0-9\.]+$/", $str)) return false;
+	if (!preg_match('/^[0-9\.]+$/', $str)) return false;
 	return true;
 }
 
@@ -38,7 +38,7 @@ function  isNumeric($str, $nullok=false)
 function  isAlphabetNumeric($str, $nullok=false)
 {
 	if ($str==null) return $nullok;
-	if (!preg_match("/^\w+$/", $str)) return false;
+	if (!preg_match('/^\w+$/', $str)) return false;
 	return true;
 }
 
@@ -47,7 +47,7 @@ function  isAlphabetNumeric($str, $nullok=false)
 function  isAlphabetNumericSpecial($str, $nullok=false)
 {
 	if ($str==null) return $nullok;
-	if (!preg_match("/^[_a-zA-Z0-9 @%#\-\.]+$/", $str)) return false;
+	if (!preg_match('/^[_a-zA-Z0-9 @%#\-\.]+$/', $str)) return false;
 	return true;
 }
 
@@ -56,7 +56,7 @@ function  isAlphabetNumericSpecial($str, $nullok=false)
 function  isGUID($uuid, $nullok=false)
 {
 	if ($uuid==null) return $nullok;
-	if (!preg_match("/^[0-9A-Fa-f]{8,8}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{12,12}$/", $uuid)) return false;
+	if (!preg_match('/^[0-9A-Fa-f]{8,8}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{4,4}-[0-9A-Fa-f]{12,12}$/', $uuid)) return false;
 	return true;
 }
 
