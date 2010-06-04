@@ -293,7 +293,8 @@ function  opensim_get_avatars_infos($condition='', &$db=null)
 							'LEFT JOIN GridUser ON PrincipalID=UserID '.$condition);
 	}
 	else if ($db->exist_table('users')) {
-		$db->query('SELECT users.UUID,username,lastname,created,lastLogin,regions.uuid FROM users JOIN regions ON homeRegion=regionHandle '.$condition);
+		$db->query('SELECT users.UUID,username,lastname,created,lastLogin,regions.uuid FROM users '.
+							'LEFT JOIN regions ON homeRegion=regionHandle '.$condition);
 	}
 	else {
 		return null;
