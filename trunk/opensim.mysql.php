@@ -18,6 +18,7 @@
 
  function  opensim_get_db_version(&$db=null)
  function  opensim_check_db(&$db=null)
+ function  opensim_users_update_time(&$db=null)
  function  opensim_get_update_time($table, &$db=null)
 
  //
@@ -110,6 +111,21 @@ function  opensim_get_db_version(&$db=null)
 
 
 
+
+function  opensim_users_update_time(&$db=null)
+{
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	if ($db->exist_table('GridUser')) 	$table = 'GridUser';
+	else if ($db->exist_table('users')) $table = 'users';
+	else return 0;
+
+	$utime = $db->get_update_time($table);
+	return $utime;
+}
+
+
+
 function  opensim_get_update_time($table, &$db=null)
 {
 	if ($table=="") return 0;
@@ -119,7 +135,6 @@ function  opensim_get_update_time($table, &$db=null)
 
 	return $utime;
 }
-
 
 
 
