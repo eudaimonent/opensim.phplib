@@ -149,28 +149,31 @@ function  opensim_check_db(&$db=null)
 
 	if (!is_object($db)) $db = & opensim_new_db();
 
-	$db->query('SELECT COUNT(*) FROM regions');
-	if ($db->Errno==0) {
-		list($ret['region_count']) = $db->next_record();
+	if ($db->exist_table('regions')) {
+		$db->query('SELECT COUNT(*) FROM regions');
+		if ($db->Errno==0) {
+			list($ret['region_count']) = $db->next_record();
+		}
+	}
 
-		if ($db->exist_table('GridUser')) {				// 0.7Dev
-			$db->query('SELECT COUNT(*) FROM UserAccounts');
-			list($ret['user_count']) = $db->next_record();
-			$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='true' and Login>(unix_timestamp(from_unixtime(unix_timestamp(now())-86400)))");
-			list($ret['now_online']) = $db->next_record();
-			$db->query('SELECT COUNT(*) FROM GridUser WHERE Login>unix_timestamp(from_unixtime(unix_timestamp(now())-2419200))');
-			list($ret['lastmonth_online']) = $db->next_record();
-			$ret['grid_status'] = true;
-		}
-		else if ($db->exist_table('users')) {			// 0.6.x
-			$db->query('SELECT COUNT(*) FROM users');
-			list($ret['user_count']) = $db->next_record();
-			$db->query("SELECT COUNT(*) FROM agents WHERE agentOnline='1' and logintime>(unix_timestamp(from_unixtime(unix_timestamp(now())-86400)))");
-			list($ret['now_online']) = $db->next_record();
-			$db->query('SELECT COUNT(*) FROM agents WHERE logintime>unix_timestamp(from_unixtime(unix_timestamp(now())-2419200))');
-			list($ret['lastmonth_online']) = $db->next_record();
-			$ret['grid_status'] = true;
-		}
+
+	if ($db->exist_table('GridUser')) {				// 0.7Dev
+		$db->query('SELECT COUNT(*) FROM UserAccounts');
+		list($ret['user_count']) = $db->next_record();
+		$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='true' and Login>(unix_timestamp(from_unixtime(unix_timestamp(now())-86400)))");
+		list($ret['now_online']) = $db->next_record();
+		$db->query('SELECT COUNT(*) FROM GridUser WHERE Login>unix_timestamp(from_unixtime(unix_timestamp(now())-2419200))');
+		list($ret['lastmonth_online']) = $db->next_record();
+		$ret['grid_status'] = true;
+	}
+	else if ($db->exist_table('users')) {			// 0.6.x
+		$db->query('SELECT COUNT(*) FROM users');
+		list($ret['user_count']) = $db->next_record();
+		$db->query("SELECT COUNT(*) FROM agents WHERE agentOnline='1' and logintime>(unix_timestamp(from_unixtime(unix_timestamp(now())-86400)))");
+		list($ret['now_online']) = $db->next_record();
+		$db->query('SELECT COUNT(*) FROM agents WHERE logintime>unix_timestamp(from_unixtime(unix_timestamp(now())-2419200))');
+		list($ret['lastmonth_online']) = $db->next_record();
+		$ret['grid_status'] = true;
 	}
 
 	return $ret;
