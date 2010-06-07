@@ -18,7 +18,9 @@
 
  function  opensim_get_db_version(&$db=null)
  function  opensim_check_db(&$db=null)
+ function  opensim_get_update_time($table, &$db=null)
 
+ //
  function  opensim_get_avatar_name($uuid, &$db=null)
  function  opensim_get_avatar_uuid($name, &$db=null)
  function  opensim_get_avatar_info($uuid, &$db=null)
@@ -82,7 +84,6 @@ require_once(CMS_MODULE_PATH.'/include/mysql.func.php');
 // for DB
 //
 
-
 function  opensim_new_db($connect=false)
 {
 	$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS, $connect);
@@ -106,6 +107,20 @@ function  opensim_get_db_version(&$db=null)
 
 	return $ver;
 }
+
+
+
+function  opensim_get_update_time($table, &$db=null)
+{
+	if ($table=="") return 0;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+	$utime = $db->get_update_time($table);
+
+	return $utime;
+}
+
+
 
 
 
