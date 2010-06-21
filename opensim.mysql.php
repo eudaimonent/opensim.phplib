@@ -161,7 +161,7 @@ function  opensim_check_db(&$db=null)
 		$db->query('SELECT COUNT(*) FROM UserAccounts');
 		list($ret['user_count']) = $db->next_record();
 		//$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='true' and Login>(unix_timestamp(from_unixtime(unix_timestamp(now())-86400)))");
-		$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='true'");
+		$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='True'");
 		list($ret['now_online']) = $db->next_record();
 		$db->query('SELECT COUNT(*) FROM GridUser WHERE Login>unix_timestamp(from_unixtime(unix_timestamp(now())-2419200))');
 		list($ret['lastmonth_online']) = $db->next_record();
@@ -418,6 +418,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 			}
 		}
 	}
+/*
 	else if ($db->exist_table('Presence')) {
 		$db->query("SELECT RegionID FROM Presence WHERE UserID='$uuid'");
 		if ($db->Errno==0) {
@@ -426,7 +427,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 			if ($rgn_name!='') $online = true;
 		}
 	}
-/*
+*/
 	else if ($db->exist_table('GridUser')) {
 		$db->query("SELECT Online,LastRegionID FROM GridUser WHERE UserID='$uuid'");
 		if ($db->Errno==0) {
@@ -434,9 +435,9 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 			if ($onln=='True') {
 				$rgn_name = opensim_get_region_name_by_id($region);
 				if ($rgn_name!='') $online = true;
+			}
 		}
 	}
-*/
 	else if ($db->exist_table('agents')) {
 		$db->query("SELECT agentOnline,currentRegion FROM agents WHERE UUID='$uuid' AND logoutTime='0'");
 		if ($db->Errno==0) {
