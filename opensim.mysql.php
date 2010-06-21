@@ -161,7 +161,7 @@ function  opensim_check_db(&$db=null)
 		$db->query('SELECT COUNT(*) FROM UserAccounts');
 		list($ret['user_count']) = $db->next_record();
 		//$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='true' and Login>(unix_timestamp(from_unixtime(unix_timestamp(now())-86400)))");
-		$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='True'");
+		$db->query("SELECT COUNT(*) FROM GridUser,Presence WHERE Online='True' and GridUser.UserID=Presence.UserID");
 		list($ret['now_online']) = $db->next_record();
 		$db->query('SELECT COUNT(*) FROM GridUser WHERE Login>unix_timestamp(from_unixtime(unix_timestamp(now())-2419200))');
 		list($ret['lastmonth_online']) = $db->next_record();
@@ -419,7 +419,9 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 		}
 	}
 	else if ($db->exist_table('Presence')) {
-		$db->query("SELECT RegionID FROM Presence WHERE UserID='$uuid'");
+		//$db->query("SELECT RegionID FROM Presence WHERE UserID='$uuid'");
+		$db->query("SELECT RegionID FROM Presence,GridUser WHERE Presence.UserID='$uuid'".
+								" and Presence.UserID=GridUser.UserID and GridUser.Online='True'");
 		if ($db->Errno==0) {
 			list($region) = $db->next_record();
 			$rgn_name = opensim_get_region_name_by_id($region);
