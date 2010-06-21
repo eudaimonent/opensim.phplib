@@ -156,13 +156,14 @@ function  opensim_check_db(&$db=null)
 		}
 	}
 
-
 	if ($db->exist_table('GridUser')) {				// 0.7Dev
 		$db->query('SELECT COUNT(*) FROM UserAccounts');
 		list($ret['user_count']) = $db->next_record();
 		//$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='true' and Login>(unix_timestamp(from_unixtime(unix_timestamp(now())-86400)))");
-		$db->query("SELECT COUNT(*) FROM GridUser,Presence WHERE Online='True' and GridUser.UserID=Presence.UserID");
-		list($ret['now_online']) = $db->next_record();
+		if ($db->exist_table('Presence')) {			// 0.7Dev
+			$db->query("SELECT COUNT(*) FROM GridUser,Presence WHERE Online='True' and GridUser.UserID=Presence.UserID");
+			list($ret['now_online']) = $db->next_record();
+		}
 		$db->query('SELECT COUNT(*) FROM GridUser WHERE Login>unix_timestamp(from_unixtime(unix_timestamp(now())-2419200))');
 		list($ret['lastmonth_online']) = $db->next_record();
 		$ret['grid_status'] = true;
