@@ -161,7 +161,7 @@ function  opensim_check_db(&$db=null)
 		list($ret['user_count']) = $db->next_record();
 		//$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='True' and Login>(unix_timestamp(from_unixtime(unix_timestamp(now())-86400)))");
 		if ($db->exist_table('Presence')) {			// 0.7
-			$db->query("SELECT COUNT(DISTINCT Presence.UserID) FROM GridUser,Presence WHERE Online='True' and GridUser.UserID=Presence.UserID");
+			$db->query("SELECT COUNT(DISTINCT Presence.UserID) FROM GridUser,Presence WHERE Online='True' and GridUser.UserID=Presence.UserID and RegionID!='00000000-0000-0000-0000-000000000000'");
 		}
 		else {										// 0.7 StandAlone mode
 			$db->query("SELECT COUNT(*) FROM GridUser WHERE Online='True'");
