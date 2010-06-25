@@ -85,9 +85,9 @@ require_once(CMS_MODULE_PATH.'/include/mysql.func.php');
 // for DB
 //
 
-function  opensim_new_db($connect=false)
+function  opensim_new_db($timeout=60)
 {
-	$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS, $connect);
+	$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS, $timeout);
 
 	return $db;
 }
@@ -147,7 +147,7 @@ function  opensim_check_db(&$db=null)
 	$ret['user_count']       = 0;
 	$ret['region_count']     = 0;
 
-	if (!is_object($db)) $db = & opensim_new_db();
+	if (!is_object($db)) $db = & opensim_new_db(3);
 
 	if ($db->exist_table('regions')) {
 		$db->query('SELECT COUNT(*) FROM regions');
