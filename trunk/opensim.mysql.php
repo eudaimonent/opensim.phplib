@@ -1084,6 +1084,7 @@ function  opensim_set_password($uuid, $passwdhash, $passwdsalt='', $tbl='', &$db
 // for Update Data Base
 //
 
+/*
 function  opensim_supply_passwordSalt(&$db=null)
 {
 	if (!is_object($db)) $db = & opensim_new_db();
@@ -1113,7 +1114,7 @@ function  opensim_supply_passwordSalt(&$db=null)
 
 	return;
 }
-
+*/
 
 
 
