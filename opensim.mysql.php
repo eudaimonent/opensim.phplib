@@ -408,12 +408,13 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 	if (!is_object($db)) $db = & opensim_new_db();
 
 	$online = false;
-	$region = '00000000-0000-0000-0000-000000000000';
-	$rgn_name = '';
+	$null_region = '00000000-0000-0000-0000-000000000000';
+	$region      = '00000000-0000-0000-0000-000000000000';
+	$rgn_name    = '';
 
 
-	if ($db->exist_field('Presence', 'Online')) {		// old 0.7Dev
-		$db->query("SELECT Online,RegionID FROM Presence WHERE UserID='$uuid'");
+	if ($db->exist_field('Presence', 'Online')) {	// old 0.7Dev
+		$db->query("SELECT Online,RegionID FROM Presence WHERE UserID='$uuid' and RegionID!='$null_region'");
 		if ($db->Errno==0) {
 			list($onln, $region) = $db->next_record();
 			if ($onln=='true') {
@@ -422,10 +423,9 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 			}
 		}
 	}
-	else if ($db->exist_table('Presence')) {
-		//$db->query("SELECT RegionID FROM Presence WHERE UserID='$uuid'");
+	else if ($db->exist_table('Presence')) {		// 0.7
 		$db->query("SELECT RegionID FROM Presence,GridUser WHERE Presence.UserID='$uuid'".
-								" and Presence.UserID=GridUser.UserID and GridUser.Online='True'");
+					" and RegionID!='$null_region' and Presence.UserID=GridUser.UserID and GridUser.Online='True'");
 		if ($db->Errno==0) {
 			list($region) = $db->next_record();
 			$rgn_name = opensim_get_region_name_by_id($region);
@@ -442,7 +442,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 			}
 		}
 	}
-	else if ($db->exist_table('agents')) {
+	else if ($db->exist_table('agents')) {			// 0.6.x
 		$db->query("SELECT agentOnline,currentRegion FROM agents WHERE UUID='$uuid' AND logoutTime='0'");
 		if ($db->Errno==0) {
 			list($onln, $region) = $db->next_record();
