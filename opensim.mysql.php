@@ -281,11 +281,11 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 	if (!is_object($db)) $db = & opensim_new_db();
 
 	//$online = false;
-	$profileTXT   = '';
+	$profileText  = '';
 	$profileImage = '';
+	$firstText    = '';
+	$firstImage   = '';
 	$partner	  = '';
-	$profileFirstText  = '';
-	$profileFirstImage = '';
 
 	if ($db->exist_table('GridUser')) {
 		$db->query('SELECT PrincipalID,FirstName,LastName,HomeRegionID,Created,Login FROM UserAccounts'.
@@ -297,7 +297,7 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 	else if ($db->exist_table('users')) {
 		$db->query("SELECT UUID,username,lastname,homeRegion,created,lastLogin,profileAboutText,profileFirstText,profileImage,profileFirstImage,partner".
 						" FROM users WHERE uuid='$uuid'");
-		list($UUID,$firstname,$lastname,$rgnHandle,$created,$lastlogin,$profileTXT,$profileFirstText,$profileImage,$profileFirstImage,$partner) = $db->next_record();
+		list($UUID, $firstname, $lastname, $rgnHandle, $created, $lastlogin, $profileText, $firstText, $profileImage, $firstImage, $partner) = $db->next_record();
 		$db->query("SELECT uuid,regionName,serverIP,serverHttpPort,serverURI FROM regions WHERE regionHandle='$rgnHandle'");
 		list($regionUUID, $regionName, $serverIP, $serverHttpPort, $serverURI) = $db->next_record();
 	}
@@ -320,12 +320,12 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 	$avinfo['serverIP'] 	  = $serverIP;
 	$avinfo['serverHttpPort'] = $serverHttpPort;
 	$avinfo['serverURI'] 	  = $serverURI;
-	$avinfo['profileTXT']	  = $profileTXT;
+	$avinfo['profileText']	  = $profileText;
 	$avinfo['profileImage']	  = $profileImage;
+	$avinfo['firstText']	  = $firstText;
+	$avinfo['firstImage'] 	  = $firstImage;
 	$avinfo['partner']	  	  = $partner;
-	$avinfo['profileFirstText']	 = $profileFirstText;
-	$avinfo['profileFirstImage'] = $profileFirstImage;
-	//$avinfo['online'] 	  	  = $online;
+	//$avinfo['online']		  = $online;
 
 	return $avinfo;
 }
