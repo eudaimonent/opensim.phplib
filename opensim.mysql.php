@@ -1365,7 +1365,7 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 
 function  opensim_display_texture_data($uuid, $prog, $path='', $tempfile='')
 {
-	if ($tempfile=='') $tempfile = '/tmp/'.$uuid);
+	if ($tempfile=='') $tempfile = '/tmp/'.$uuid;
 
 	if ($path=="") {
 		if (file_exists('/usr/local/bin/'.$prog)) $path = '/usr/local/bin/';
