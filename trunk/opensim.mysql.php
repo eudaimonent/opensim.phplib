@@ -63,6 +63,9 @@
  function  opensim_get_voice_mode($region, &$db=null)
  function  opensim_set_voice_mode($region, $mode, &$db=null)
  
+
+ function  opensim_display_texture_data($uuid, $prog, $path='', $tempfile='')
+
  *********************************************************************************/
 
 
@@ -1353,4 +1356,71 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 
 
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//
+// for Asset
+//
+
+function  opensim_display_texture_data($uuid, $prog, $path='', $tempfile='')
+{
+	if ($tempfile=='') $tempfile = '/tmp/'.$uuid);
+
+	if ($path=="") {
+		if (file_exists('/usr/local/bin/'.$prog)) $path = '/usr/local/bin/';
+		else if (file_exists('/usr/bin/'.$prog))  $path = '/usr/bin/';
+	}
+	if (!file_exists($path.$prog)) {
+		echo '<h4>program '.$path.$prog.' is not found!!</h4>');
+		return false;
+	}
+
+	if ($prog=='convert')     $prog = $path.'convert '.$tempfile.' jpeg:-';
+	else if ($prog=='jasper') $prog = $path.'jasper -f '.$tempfile.' -T jpg';
+	$imgdata = '';
+
+
+	// from MySQL Server
+	$asset = opensim_get_asset_data($uuid);
+	if ($asset) {
+    	if ($asset['type']==0) {
+        	$imgdata = $asset['data'];
+    	}
+	}
+	else {
+		echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).'</h4>';
+		return false;
+	}
+
+
+	/*
+	// from Asset Server
+	$asset_url = $ASSET_SERVER_URL.'/assets/'.$uuid;
+	$fp = fopen($asset_url, "rb");
+	stream_set_timeout($fp, 5);
+	$content = stream_get_contents($fp);
+	fclose($fp);
+	if (!$content) {
+		echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).'</h4>';
+		return false;
+	}
+
+	$xml = new SimpleXMLElement($content);
+	$imgdata = base64_decode($xml->Data);
+	*/
+
+
+	$fp = fopen($tempfile, 'wb');
+	fwrite($fp, $imgdata);
+	fclose($fp);
+
+	header("Content-type: image/jpeg"); 
+	passthru($prog);
+
+	unlink($tempfile);
+
+	return true;
+}
+ 
 ?>
