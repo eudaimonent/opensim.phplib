@@ -1372,7 +1372,7 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $tempfile='')
 		else if (file_exists('/usr/bin/'.$prog))  $path = '/usr/bin/';
 	}
 	if (!file_exists($path.$prog)) {
-		echo '<h4>program '.$path.$prog.' is not found!!</h4>');
+		echo '<h4>program '.$path.$prog.' is not found!!</h4>';
 		return false;
 	}
 
@@ -1389,7 +1389,7 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $tempfile='')
     	}
 	}
 	else {
-		echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).'</h4>';
+		echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).')</h4>';
 		return false;
 	}
 
