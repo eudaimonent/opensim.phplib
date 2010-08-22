@@ -1269,13 +1269,42 @@ function  opensim_recreate_presence(&$db=null)
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
+// for Assets
+//
+
+function  opensim_get_asset_data($uuid, &$db=null)
+{
+	$asset = array();
+
+	if (!isGUID($uuid)) return $asset;
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$db->query("SELECT name,description,assetType,data,asset_flags,CreatorID FROM assets WHERE id='$uuid'");
+	list($name, $desc, $type, $data, $flag, $creator) = $db->next_record();
+
+	$asset['UUID'] 	  = $uuid;
+	$asset['name'] 	  = $name;
+	$asset['desc'] 	  = $desc;
+	$asset['type'] 	  = $type;
+	$asset['data'] 	  = $data;
+	$asset['flag'] 	  = $flag;
+	$asset['creator'] = $creator;
+
+	return $asset;
+}
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//
 // for Voice (VoIP)
 //
 
 function  opensim_get_voice_mode($region, &$db=null)
 {
 	if (!isGUID($region)) return -1;
-
 	if (!is_object($db)) $db = & opensim_new_db();
 
 	$voiceflag = 0x60000000;
