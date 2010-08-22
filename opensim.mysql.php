@@ -1415,7 +1415,7 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $tempfile='')
 	fwrite($fp, $imgdata);
 	fclose($fp);
 
-	header("Content-type: image/jpeg"); 
+	header("Content-Type: image/jpeg"); 
 	passthru($prog);
 
 	unlink($tempfile);
