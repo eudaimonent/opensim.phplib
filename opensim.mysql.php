@@ -33,6 +33,8 @@
 
  function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, &$db=null)
  function  opensim_delete_avatar($uuid, &$db=null)
+
+ function  opensim_clear_login_table(&$db=null)
  
  function  opensim_get_region_name($region, &$db=null)
  function  opensim_get_region_name_by_id($id, &$db=null)
@@ -63,7 +65,6 @@
  function  opensim_get_voice_mode($region, &$db=null)
  function  opensim_set_voice_mode($region, $mode, &$db=null)
  
-
  function  opensim_display_texture_data($uuid, $prog, $path='', $tempfile='')
 
  *********************************************************************************/
@@ -588,6 +589,26 @@ function  opensim_delete_avatar($uuid, &$db=null)
 		//$db->query("DELETE FROM transactions WHERE UUID='$uuid'");
 		$db->query("DELETE FROM balances WHERE user LIKE '".$uuid."@%'");
 		$db->query("DELETE FROM userinfo WHERE user LIKE '".$uuid."@%'");
+	}
+
+	return true;
+}
+
+
+
+function  opensim_clear_login_table(&$db=null)
+{
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	if ($db->exist_table('Presence')) {
+		$db->query("DELETE FROM Presence");
+	}
+	else if ($db->exist_table('agents')) {
+		//$db->query("DELETE FROM agents");
+		return true;
+	}
+	else {
+		return false;
 	}
 
 	return true;
