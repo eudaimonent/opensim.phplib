@@ -177,7 +177,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 				}
 			}
 
-			string filename = "mutes"+client.AgentId.ToString();
+			string filename = "mutes" + client.AgentId.ToString();
 			IXfer xfer = client.Scene.RequestModuleInterface<IXfer>();
 			if (xfer != null)
 			{

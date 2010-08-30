@@ -99,6 +99,7 @@ if ($method == "/RequestList/") {
 		$query_str = "SELECT AgentID,MuteID,MuteName,MuteType,MuteFlags,Timestamp FROM ".MUTE_LIST_TBL." WHERE AgentID='".$agent_id."'";
 		$DbLink->query($query_str);
 
+		//error_log("mute.php: RequestList Query = ".$query_str);
 		while(list($agentID, $muteID, $muteName, $muteType, $muteFlags, $timestamp) = $DbLink->next_record()) {
  			echo '<GridMuteList xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">';
 			echo   '<agentID>'.  $agentID.  '</agentID>';
