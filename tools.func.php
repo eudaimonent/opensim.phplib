@@ -47,7 +47,7 @@ function  isAlphabetNumeric($str, $nullok=false)
 function  isAlphabetNumericSpecial($str, $nullok=false)
 {
 	if ($str==null) return $nullok;
-	if (!preg_match('/^[_a-zA-Z0-9 @%#\-\.]+$/', $str)) return false;
+	if (!preg_match('/^[_a-zA-Z0-9 &@%#\-\.]+$/', $str)) return false;
 	return true;
 }
 
