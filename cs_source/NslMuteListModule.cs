@@ -48,7 +48,7 @@ using OpenSim.Region.Framework.Scenes;
 
 namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 {
-	public class MuteListModule : ISharedRegionModule
+	public class NslMuteListModule : ISharedRegionModule
 	{
 		private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -66,7 +66,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 				return;
 			}
 
-			if (cnf != null && cnf.GetString("MuteListModule", "None") != "MuteListModule")
+			if (cnf != null && cnf.GetString("MuteListModule", "None") != "NslMuteListModule")
 			{
 				enabled = false;
 				return;
@@ -75,7 +75,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 			m_RestURL = cnf.GetString("MuteListURL", "");
 			if (m_RestURL == "")
 			{
-				m_log.Error("[MUTE LIST] Module was enabled, but no URL is given, disabling");
+				m_log.Error("[NSL MUTE LIST] Module was enabled, but no URL is given, disabling");
 				enabled = false;
 				return;
 			}
@@ -115,13 +115,13 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 		{
 			if (!enabled) return;
 
-			m_log.Debug("[MUTE LIST] MUTE LIST enabled");
+			m_log.Debug("[NSL MUTE LIST] NSL MUTE LIST enabled");
 		}
 
 
 		public string Name
 		{
-			get { return "MuteListModule"; }
+			get { return "NslMuteListModule"; }
 		}
 
 
@@ -147,7 +147,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 	   	//
 	  	public void OnUpdateMuteListEntry(IClientAPI client, UUID MuteID, string Name, int Type, UUID AgentID) 
 	   	{
-			//m_log.DebugFormat("[MUTE LIST] OnUpdateMuteListEntry {0}, {1}, {2}, {3}", MuteID.ToString(), Name, Type.ToString(), AgentID.ToString());
+			//m_log.DebugFormat("[NSL MUTE LIST] OnUpdateMuteListEntry {0}, {1}, {2}, {3}", MuteID.ToString(), Name, Type.ToString(), AgentID.ToString());
 
 	   		GridMuteList ml = new GridMuteList(AgentID, MuteID, Name, Type);
 			bool success = SynchronousRestObjectPoster.BeginPostObject<GridMuteList, bool>("POST", m_RestURL+"/UpdateList/", ml);
@@ -156,7 +156,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 
 	   	public void OnRemoveMuteListEntry(IClientAPI client, UUID MuteID, string Name, UUID AgentID)
 	   	{
-			//m_log.DebugFormat("[MUTE LIST] OnRemoveMuteListEntry {0}, {1}, {2}", MuteID.ToString(), Name, AgentID.ToString());
+			//m_log.DebugFormat("[NSL MUTE LIST] OnRemoveMuteListEntry {0}, {1}, {2}", MuteID.ToString(), Name, AgentID.ToString());
 
 	   		GridMuteList ml = new GridMuteList(AgentID, MuteID, Name);
 			bool success = SynchronousRestObjectPoster.BeginPostObject<GridMuteList, bool>("POST", m_RestURL+"/DeleteList/", ml);
@@ -165,30 +165,19 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 
 		private void OnMuteListRequest(IClientAPI client, uint crc)
 		{
-			//m_log.DebugFormat("[MUTE LIST] Got MUTE LIST request for crc {0}", crc);
+			//m_log.DebugFormat("[NSL MUTE LIST] Got NSL MUTE LIST request for crc {0}", crc);
 
-			int cnt = 0;
 			string str = "";
-			string url = m_RestURL + "/RequestList/";
 
-			List<GridMuteList> mllist = SynchronousRestObjectPoster.BeginPostObject<UUID, List<GridMuteList>>("POST", url, client.AgentId);
-			while (mllist==null && cnt<10) {		// retry
-				mllist = SynchronousRestObjectPoster.BeginPostObject<UUID, List<GridMuteList>>("POST", url, client.AgentId);
-				cnt++;
-			}
-
+			List<GridMuteList> mllist = SynchronousRestObjectPoster.BeginPostObject<UUID, List<GridMuteList>>("POST", m_RestURL+"/RequestList/", client.AgentId);
 			if (mllist!=null) {
 				foreach (GridMuteList ml in mllist)
 				{
 					str += ml.muteType.ToString()+" "+ml.muteID.ToString()+" "+ml.muteName+"|"+ml.muteFlags.ToString()+"\n";
 				}
 			}
-			else {
-				m_log.ErrorFormat("[MUTE LIST] Not response from mute.php");
-				return;
-			}
 
-			string filename = "mutes" + client.AgentId.ToString();
+			string filename = "mutes"+client.AgentId.ToString();
 			IXfer xfer = client.Scene.RequestModuleInterface<IXfer>();
 			if (xfer != null)
 			{
