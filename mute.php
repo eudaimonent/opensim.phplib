@@ -5,7 +5,7 @@
 //
 
 require_once('../include/config.php');
-require_once('../include/xoopensim.func.php');
+require_once('../include/opensim.mysql.php');
 
 //$request_xml = $HTTP_RAW_POST_DATA;
 //error_log("mute.php: ".$request_xml);
@@ -96,7 +96,9 @@ if ($method == "/RequestList/") {
 	echo '<ArrayOfGridMuteList xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">';
 
 	if (isGUID($agent_id)) {
-		$DbLink->query("SELECT * FROM ".MUTE_LIST_TBL." WHERE AgentID='".$agent_id."'");
+		$query_str = "SELECT AgentID,MuteID,MuteName,MuteType,MuteFlags,Timestamp FROM ".MUTE_LIST_TBL." WHERE AgentID='".$agent_id."'";
+		$DbLink->query($query_str);
+
 		while(list($agentID, $muteID, $muteName, $muteType, $muteFlags, $timestamp) = $DbLink->next_record()) {
  			echo '<GridMuteList xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">';
 			echo   '<agentID>'.  $agentID.  '</agentID>';
