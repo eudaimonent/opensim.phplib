@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -184,14 +186,8 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
             {
                 //m_log.DebugFormat("[OFFLINE MESSAGING] Retrieving stored messages for {0}", client.AgentId);
 
-				int cnt = 0;
 				string url = m_RestURL + "/RetrieveMessages/";
-
                 List<GridInstantMessage> msglist = SynchronousRestObjectPoster.BeginPostObject<UUID, List<GridInstantMessage>>("POST", url, client.AgentId);
-				while (msglist==null && cnt<10) {
-                	msglist = SynchronousRestObjectPoster.BeginPostObject<UUID, List<GridInstantMessage>>("POST", url, client.AgentId);
-					cnt++;
-				}
 
 				if (msglist!=null) {
                 	foreach (GridInstantMessage im in msglist)
@@ -209,7 +205,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 					}
                 }
 				else {
-                	m_log.DebugFormat("[OFFLINE MESSAGING] Not response from offline.php");
+                	m_log.ErrorFormat("[OFFLINE MESSAGING] Not response from offline.php");
 					return;
 				}
             }
