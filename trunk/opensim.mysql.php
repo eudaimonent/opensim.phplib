@@ -48,6 +48,8 @@
  function  opensim_get_region_owner($region, &$db=null)
  function  opensim_set_region_owner($region, $owner, &$db=null)
 
+ function  opensim_get_servers_ip(&$db=null)
+
  function  opensim_create_inventory_folders($uuid, &$db=null)
  function  opensim_get_home_region($uuid, &$db=null)
  function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', $pos_z='0', &$db=null)
@@ -66,6 +68,9 @@
  function  opensim_set_voice_mode($region, $mode, &$db=null)
  
  function  opensim_display_texture_data($uuid, $prog, $path='', $tempfile='')
+
+ //
+ function  opensim_is_access_from_region_server()
 
  *********************************************************************************/
 
@@ -145,11 +150,11 @@ function  opensim_get_update_time($table, &$db=null)
 
 function  opensim_check_db(&$db=null)
 {
-	$ret['grid_status']      = false;
-	$ret['now_online']       = 0;
+	$ret['grid_status']	  = false;
+	$ret['now_online']	   = 0;
 	$ret['lastmonth_online'] = 0;
-	$ret['user_count']       = 0;
-	$ret['region_count']     = 0;
+	$ret['user_count']	   = 0;
+	$ret['region_count']	 = 0;
 
 	if (!is_object($db)) $db = & opensim_new_db(3);
 
@@ -287,7 +292,7 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 	//$online = false;
 	$profileText  = '';
 	$profileImage = '';
-	$firstText    = '';
+	$firstText	= '';
 	$firstImage   = '';
 	$partner	  = '';
 
@@ -340,7 +345,7 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 // Attention: When call this function, please check $condition for prevention of SQL Injection.
 //
 // return:
-//		$avinfos[$UUID]['UUID']	     ... UUID
+//		$avinfos[$UUID]['UUID']		 ... UUID
 //		$avinfos[$UUID]['firstname'] ... first name
 //		$avinfos[$UUID]['lastname']  ... lasti name
 //		$avinfos[$UUID]['created']   ... created time
@@ -367,7 +372,7 @@ function  opensim_get_avatars_infos($condition='', &$db=null)
 
 	if ($db->Errno==0) {
 		while (list($UUID,$firstname,$lastname,$created,$lastlogin,$hmregion) = $db->next_record()) {
-			$avinfos[$UUID]['UUID']	     = $UUID;
+			$avinfos[$UUID]['UUID']		 = $UUID;
 			$avinfos[$UUID]['firstname'] = $firstname;
 			$avinfos[$UUID]['lastname']  = $lastname;
 			$avinfos[$UUID]['created']   = $created;
@@ -403,7 +408,7 @@ function  opensim_get_avatars_profiles_from_users($condition='', &$db=null)
 				$profs[$UUID]['FirstAboutText'] = $firsttext;
 				$profs[$UUID]['Image'] 	   	= $image;
 				$profs[$UUID]['FirstImage'] = $firstimage;
-				$profs[$UUID]['Partnar']    = $partnar;
+				$profs[$UUID]['Partnar']	= $partnar;
 				$profs[$UUID]['Email'] 	   	= $email;
 			}
 		}
@@ -422,8 +427,8 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 
 	$online = false;
 	$null_region = '00000000-0000-0000-0000-000000000000';
-	$region      = '00000000-0000-0000-0000-000000000000';
-	$rgn_name    = '';
+	$region	  = '00000000-0000-0000-0000-000000000000';
+	$rgn_name	= '';
 
 
 	if ($db->exist_field('Presence', 'Online')) {	// old 0.7Dev
@@ -470,7 +475,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 	$ret['region_id'] 	= $region;
 	$ret['region_name'] = $rgn_name;
 	return $ret;
-}                 
+}				 
 
 
 
@@ -479,7 +484,7 @@ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregi
 	if (!isGUID($UUID)) return false;
 	if (!isAlphabetNumericSpecial($firstname))  return false;
 	if (!isAlphabetNumericSpecial($lastname))   return false;
-	if (!isAlphabetNumericSpecial($passwd))     return false;
+	if (!isAlphabetNumericSpecial($passwd))	 return false;
 	if (!isAlphabetNumericSpecial($homeregion)) return false;
 
 	if (!is_object($db)) $db = & opensim_new_db();
@@ -520,7 +525,7 @@ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregi
 
 			if ($errno!=0) {
 				$db->query("DELETE FROM UserAccounts WHERE PrincipalID='$UUID'");
-				$db->query("DELETE FROM auth         WHERE UUID='$UUID'");
+				$db->query("DELETE FROM auth		 WHERE UUID='$UUID'");
 				$db->query("DELETE FROM inventoryfolders WHERE agentID='$UUID'");
 				if ($db->exist_table('GridUser')) $db->query("DELETE FROM GridUser WHERE UserID='$UUID'");
 			}
@@ -560,17 +565,17 @@ function  opensim_delete_avatar($uuid, &$db=null)
 
 	if ($db->exist_table('UserAccounts')) {
 		$db->query("DELETE FROM UserAccounts WHERE PrincipalID='$uuid'");
-		$db->query("DELETE FROM auth         WHERE UUID='$uuid'");
-		$db->query("DELETE FROM Avatars      WHERE PrincipalID='$uuid'");
-		$db->query("DELETE FROM Friends      WHERE PrincipalID='$uuid'");
-		$db->query("DELETE FROM tokens       WHERE UUID='$uuid'");
+		$db->query("DELETE FROM auth		 WHERE UUID='$uuid'");
+		$db->query("DELETE FROM Avatars	  WHERE PrincipalID='$uuid'");
+		$db->query("DELETE FROM Friends	  WHERE PrincipalID='$uuid'");
+		$db->query("DELETE FROM tokens	   WHERE UUID='$uuid'");
 		if ($db->exist_table('Presence')) $db->query("DELETE FROM Presence WHERE UserID='$uuid'");
 		if ($db->exist_table('GridUser')) $db->query("DELETE FROM GridUser WHERE UserID='$uuid'");
 	}
 
 	if ($db->exist_table('users')) {
-		$db->query("DELETE FROM users        WHERE UUID='$uuid'");
-		$db->query("DELETE FROM agents       WHERE UUID='$uuid'");
+		$db->query("DELETE FROM users		WHERE UUID='$uuid'");
+		$db->query("DELETE FROM agents	   WHERE UUID='$uuid'");
 		$db->query("DELETE FROM avatarappearance  WHERE Owner='$uuid'");
 		$db->query("DELETE FROM avatarattachments WHERE UUID='$uuid'");
 		$db->query("DELETE FROM userfriends	 WHERE ownerID='$uuid'");
@@ -713,7 +718,7 @@ function  opensim_get_region_info($region, &$db=null)
 
 	$db->query("SELECT regionName,serverIP,serverHttpPort,serverURI,locX,locY FROM regions WHERE uuid='$region'");
 	list($regionName, $serverIP, $serverHttpPort, $serverURI, $locX, $locY) = $db->next_record();
-    $rginfo = opensim_get_region_owner($region, $db);
+	$rginfo = opensim_get_region_owner($region, $db);
 
 	$rginfo['regionName'] 	  = $regionName;
 	$rginfo['serverIP'] 	  = $serverIP;
@@ -878,6 +883,28 @@ function  opensim_set_region_owner($region, $owner, &$db=null)
 
 	if ($errno!=0) return false;
 	return true;
+}
+
+
+
+
+function  opensim_get_servers_ip(&$db=null)
+{
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$ips = array();
+
+	$db->query("SELECT DISTINCT serverIP FROM regions");
+
+	if ($db->Errno==0) {
+		$count = 0;
+		while (list($serverIP) = $db->next_record()) {
+			$ips[$count] = $serverIP;
+			$count++;
+		}		
+	}
+
+	return $ips;
 }
 
 
@@ -1338,7 +1365,7 @@ function  opensim_get_voice_mode($region, &$db=null)
 		$voiceflag &= $flag;
 	}
 
-	if      ($voiceflag==0x20000000) return 1;
+	if	  ($voiceflag==0x20000000) return 1;
 	else if ($voiceflag==0x40000000) return 2;
 	return 0;
 }	
@@ -1358,7 +1385,7 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 	$db->query("SELECT UUID,LandFlags FROM land WHERE RegionUUID='$region'");
 	while (list($UUID, $flag) = $db->next_record()) {
 		$flag &= 0x9fffffff;
-		if ($mode==1)      $flag |= 0x20000000;
+		if ($mode==1)	  $flag |= 0x20000000;
 		else if ($mode==2) $flag |= 0x40000000;
 
 		$vflags[$colum]['UUID'] = $UUID;
@@ -1399,7 +1426,7 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='')
 	}
 
 	// program for image processing of jpeg2000
-	if ($prog=='convert')     $prog = $path.'convert '.$cachefile.' jpeg:-';
+	if ($prog=='convert')	 $prog = $path.'convert '.$cachefile.' jpeg:-';
 	else if ($prog=='jasper') $prog = $path.'jasper -f '.$cachefile.' -T jpg';
 
 
@@ -1410,9 +1437,9 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='')
 		// from MySQL Server
 		$asset = opensim_get_asset_data($uuid);
 		if ($asset) {
-    		if ($asset['type']==0) {
-        		$imgdata = $asset['data'];
-    		}
+			if ($asset['type']==0) {
+				$imgdata = $asset['data'];
+			}
 		}
 		else {
 			echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).')</h4>';
@@ -1448,4 +1475,37 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='')
 	return true;
 }
  
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//
+// Tools
+//
+
+function  opensim_is_access_from_region_server()
+{
+	$ip_match = false;
+	$remote_addr = $_SERVER['REMOTE_ADDR'];
+	$server_addr = $_SERVER['SERVER_ADDR'];
+
+	if ($remote_addr==$server_addr or $remote_addr=="127.0.0.1") return true;
+
+	$ips = opensim_get_servers_ip();
+
+	foreach($ips as $ip) {
+		if ($ip == $remote_addr) {
+			$ip_match = true;
+			break;
+		}
+	}
+
+	return $ip_match;
+}
+
+
+
+
 ?>
