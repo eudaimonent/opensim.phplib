@@ -62,8 +62,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
                 enabled = false;
                 return;
             }
-            if (cnf != null && cnf.GetString("OfflineMessageModule", "None") !=
-                    "OfflineMessageModule")
+            if (cnf != null && cnf.GetString("OfflineMessageModule", "None") != "OfflineMessageModule")
             {
                 enabled = false;
                 return;
