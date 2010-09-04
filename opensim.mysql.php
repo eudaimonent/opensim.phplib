@@ -45,8 +45,8 @@
  function  opensim_get_regions_names($condition='', &$db=null)
  function  opensim_get_regions_infos($condition='', &$db=null)
 
- function  opensim_get_region_owner($region, &$db=null)
- function  opensim_set_region_owner($region, $owner, &$db=null)
+ function  opensim_get_estate_owner($region, &$db=null)
+ function  opensim_set_estate_owner($region, $owner, &$db=null)
 
  function  opensim_get_servers_ip(&$db=null)
 
@@ -719,7 +719,7 @@ function  opensim_get_region_info($region, &$db=null)
 
 	$db->query("SELECT regionName,serverIP,serverHttpPort,serverURI,locX,locY FROM regions WHERE uuid='$region'");
 	list($regionName, $serverIP, $serverHttpPort, $serverURI, $locX, $locY) = $db->next_record();
-	$rginfo = opensim_get_region_owner($region, $db);
+	$rginfo = opensim_get_estate_owner($region, $db);
 
 	$rginfo['regionName'] 	  = $regionName;
 	$rginfo['serverIP'] 	  = $serverIP;
@@ -830,7 +830,7 @@ function  opensim_get_regions_infos($condition='', &$db=null)
 //
 // SIMのリージョンIDからオーナーの情報を返す．
 // 
-function  opensim_get_region_owner($region, &$db=null)
+function  opensim_get_estate_owner($region, &$db=null)
 {
 	if (!isGUID($region)) return null;
 
@@ -871,7 +871,7 @@ function  opensim_get_region_owner($region, &$db=null)
 
 
 
-function  opensim_set_region_owner($region, $owner, &$db=null)
+function  opensim_set_estate_owner($region, $owner, &$db=null)
 {
 	if (!isGUID($region)) return false;
 	if (!isGUID($owner))  return false;
