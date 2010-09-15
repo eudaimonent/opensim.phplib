@@ -28,8 +28,9 @@
 
 function  isNumeric($str, $nullok=false)
 {
-	if ($str==null) return $nullok;
+	if ($str!='0' and $str==null) return $nullok;
 	if (!preg_match('/^[0-9\.]+$/', $str)) return false;
+
 	return true;
 }
 
@@ -37,7 +38,7 @@ function  isNumeric($str, $nullok=false)
 
 function  isAlphabetNumeric($str, $nullok=false)
 {
-	if ($str==null) return $nullok;
+	if ($str!='0' and $str==null) return $nullok;
 	if (!preg_match('/^\w+$/', $str)) return false;
 	return true;
 }
@@ -46,7 +47,7 @@ function  isAlphabetNumeric($str, $nullok=false)
 
 function  isAlphabetNumericSpecial($str, $nullok=false)
 {
-	if ($str==null) return $nullok;
+	if ($str!='0' and $str==null) return $nullok;
 	if (!preg_match('/^[_a-zA-Z0-9 &@%#\-\.]+$/', $str)) return false;
 	return true;
 }

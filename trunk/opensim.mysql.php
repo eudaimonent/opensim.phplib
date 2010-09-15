@@ -27,6 +27,9 @@
  function  opensim_get_avatar_info($uuid, &$db=null)
  function  opensim_get_avatar_online($uuid, &$db=null)
 
+ function  opensim_get_avatar_flags($uuid, &$db=null)
+ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
+
  function  opensim_get_avatars_num(&$db=null)
  function  opensim_get_avatars_infos($condition='', &$db=null)
  function  opensim_get_avatars_profiles_from_users($condition='', &$db=null)
@@ -428,8 +431,8 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 
 	$online = false;
 	$null_region = '00000000-0000-0000-0000-000000000000';
-	$region	  = '00000000-0000-0000-0000-000000000000';
-	$rgn_name	= '';
+	$region	  	 = '00000000-0000-0000-0000-000000000000';
+	$rgn_name	 = '';
 
 
 	if ($db->exist_field('Presence', 'Online')) {	// old 0.7Dev
@@ -477,6 +480,68 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 	$ret['region_name'] = $rgn_name;
 	return $ret;
 }				 
+
+
+
+
+function  opensim_get_avatar_flags($uuid, &$db=null)
+{
+	if (!isGUID($uuid)) return null;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	// for 0.7
+	if ($db->exist_table('UserAccounts')) {
+		$db->query("SELECT UserFlags FROM UserAccounts WHERE PrincipalID='$uuid'");
+		if ($db->Errno==0) {
+			list($flags) = $db->next_record();
+			return $flags;
+		}
+	}
+
+	// for 0.6
+	else if ($db->exist_table('users')) {
+		$db->query("SELECT userFlags FROM users WHERE UUID='$uuid'");
+		if ($db->Errno==0) {
+			list($flags) = $db->next_record();
+			return $flags;
+		}
+	}
+
+	return 0;
+}
+
+
+
+function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
+{
+	if (!isGUID($uuid)) return false;
+
+	if (!isNumeric($flags)) return false;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	// for 0.7
+	if ($db->exist_table('UserAccounts')) {
+		$query_str = "UPDATE UserAccounts SET UserFlags='$flags' WHERE PrincipalID='$uuid'";
+error_log("==========> ".$query_str);
+		$db->query($query_str);
+		if ($db->Errno==0) return true;
+	}
+
+	// for 0.6
+	else if ($db->exist_table('users')) {
+		$query_str = "UPDATE users SET userFlags='$flags' WHERE UUID='$uuid'";
+		$db->query($query_str);
+		if ($db->Errno==0) return true;
+	}
+
+	return false;
+}
+
+
+
+
 
 
 
