@@ -40,7 +40,6 @@
  function  opensim_clear_login_table(&$db=null)
  
  function  opensim_get_region_name($region, &$db=null)
- function  opensim_get_region_name_by_id($id, &$db=null)
  function  opensim_get_region_uuid($name, &$db=null)
  function  opensim_get_region_info($region, &$db=null)
 
@@ -440,7 +439,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 		if ($db->Errno==0) {
 			list($onln, $region) = $db->next_record();
 			if ($onln=='true') {
-				$rgn_name = opensim_get_region_name_by_id($region);
+				$rgn_name = opensim_get_region_name($region);
 				if ($rgn_name!='') $online = true;
 			}
 		}
@@ -450,7 +449,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 					" and RegionID!='$null_region' and Presence.UserID=GridUser.UserID and GridUser.Online='True'");
 		if ($db->Errno==0) {
 			list($region) = $db->next_record();
-			$rgn_name = opensim_get_region_name_by_id($region);
+			$rgn_name = opensim_get_region_name($region);
 			if ($rgn_name!='') $online = true;
 		}
 	}
@@ -459,7 +458,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 		if ($db->Errno==0) {
 			list($onln, $region) = $db->next_record();
 			if ($onln=='True') {
-				$rgn_name = opensim_get_region_name_by_id($region);
+				$rgn_name = opensim_get_region_name_by_i($region);
 				if ($rgn_name!='') $online = true;
 			}
 		}
@@ -469,7 +468,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 		if ($db->Errno==0) {
 			list($onln, $region) = $db->next_record();
 			if ($onln=='1') {
-				$rgn_name = opensim_get_region_name_by_id($region);
+				$rgn_name = opensim_get_region_name($region);
 				if ($rgn_name!='') $online = true;
 			}
 		}
@@ -723,14 +722,20 @@ function  opensim_get_region_uuid($name, &$db=null)
 
 
 
-function  opensim_get_region_name($region, &$db=null)
+function  opensim_get_region_name($id, &$db=null)
 {
-	if (!isGUID($region)) return null;
+	if (!isGUID($id) and !isNumeric($id)) return null;
 
 	if (!is_object($db)) $db = & opensim_new_db();
 
-	$db->query("SELECT regionName FROM regions WHERE uuid='$region'");
-	list($regionName) = $db->next_record();
+	if (isGUID($id)) {
+		$db->query("SELECT regionName FROM regions WHERE uuid='$id'");
+		list($regionName) = $db->next_record();
+	}
+	else {
+		$db->query("SELECT regionName FROM regions WHERE regionHandle='$id'");
+		list($regionName) = $db->next_record();
+	}
 
 	return $regionName;
 }
@@ -754,26 +759,6 @@ function  opensim_get_regions_names($condition='', &$db=null)
 }
 
  
-
-function  opensim_get_region_name_by_id($id, &$db=null)
-{
-	if (!isGUID($id) and !isNumeric($id)) return null;
-
-	if (!is_object($db)) $db = & opensim_new_db();
-
-	if (isGUID($id)) {
-		$db->query("SELECT regionName FROM regions WHERE uuid='$id'");
-		list($regionName) = $db->next_record();
-	}
-	else {
-		$db->query("SELECT regionName FROM regions WHERE regionHandle='$id'");
-		list($regionName) = $db->next_record();
-	}
-
-	return $regionName;
-}
-
-
 
 function  opensim_get_region_info($region, &$db=null)
 {
