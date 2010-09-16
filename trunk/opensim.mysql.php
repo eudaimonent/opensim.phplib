@@ -524,7 +524,6 @@ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
 	// for 0.7
 	if ($db->exist_table('UserAccounts')) {
 		$query_str = "UPDATE UserAccounts SET UserFlags='$flags' WHERE PrincipalID='$uuid'";
-error_log("==========> ".$query_str);
 		$db->query($query_str);
 		if ($db->Errno==0) return true;
 	}
