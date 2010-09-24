@@ -20,6 +20,8 @@
  * function  make_random_hash()
  * function  make_random_guid()
  *
+ * function  j2k_to_tga($file) 		need j2k_to_image (OpenJpeg)
+ *
  ****************************************************************/
 
 
@@ -82,5 +84,25 @@ function  make_random_guid()
 	return $uuid;
 }
  
+
+
+
+function  j2k_to_tga($file)
+{
+	$com_totga = '';
+
+	if (file_exists('/usr/local/bin/j2k_to_image')) $com_totga = '/usr/local/bin/j2k_to_image';
+	else if (file_exists('/usr/bin/j2k_to_image'))  $com_totga = '/usr/bin/j2k_to_image';
+	else if (file_exists('/bin/j2k_to_image'))      $com_totga = '/bin/j2k_to_image';
+	if ($com_totga=='') return false;
+
+	$ret = rename($file, $file.'.j2k');
+	if (!$ret) return false;
+
+	exec("$com_totga -i $file.j2k -o $file.tga 1>/dev/null 2>&1");
+	unlink($file.'.j2k');
+
+	return true;
+}
 
 ?>
