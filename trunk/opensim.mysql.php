@@ -4,7 +4,7 @@
  *
  * 			Copyright (c) 2009, 2010   http://www.nsl.tuis.ac.jp/
  *
- *			supported versions of OpenSim are 0.6.7, 0.6.8, 0.6.9 and 0.7Dev
+ *			supported versions of OpenSim are 0.6.7, 0.6.8, 0.6.9, 0.7 and 0.7.1Dev
  *			tools.func.php is needed
  *			mysql.func.php is needed
  *
