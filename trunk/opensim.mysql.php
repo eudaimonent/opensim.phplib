@@ -1466,22 +1466,19 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='')
 	if ($cachedir=='') $cachedir = '/tmp';
 	$cachefile = $cachedir.'/'.$uuid;
 
+
 	if ($path=="") {
 		if (file_exists('/usr/local/bin/'.$prog)) $path = '/usr/local/bin/';
-		else if (file_exists('/usr/bin/'.$prog))  $path = '/usr/bin/';
+		else if (file_exists('/usr/bin/'. $prog)) $path = '/usr/bin/';
 	}
 	if (!file_exists($path.$prog)) {
 		echo '<h4>program '.$path.$prog.' is not found!!</h4>';
 		return false;
 	}
 
-	// program for image processing of jpeg2000
-	if ($prog=='convert')	  $prog = $path.'convert '.  $cachefile.' jpeg:-';
-	else if ($prog=='jasper') $prog = $path.'jasper -f '.$cachefile.' -T jpg';
-
 
 	// get and save image
-	if (!file_exists($cachefile)) {
+	if (!file_exists($cachefile) and !file_exists($cachefile.'.tga')) {
 		$imgdata = '';
 
 		// from MySQL Server
@@ -1517,7 +1514,16 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='')
 		$fp = fopen($cachefile, 'wb');
 		fwrite($fp, $imgdata);
 		fclose($fp);
+
+		j2k_to_tga($cachefile);
 	}
+
+
+	if (file_exists($cachefile.'.tga')) $cachefile .= '.tga';
+
+	// program for image processing of jpeg2000
+	if ($prog=='convert')	  $prog = $path.'convert '.  $cachefile.' jpeg:-';
+	else if ($prog=='jasper') $prog = $path.'jasper -f '.$cachefile.' -T jpg';
 
 
 	// display image
