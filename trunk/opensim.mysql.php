@@ -1476,7 +1476,7 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='')
 	}
 
 	// program for image processing of jpeg2000
-	if ($prog=='convert')	 $prog = $path.'convert '.$cachefile.' jpeg:-';
+	if ($prog=='convert')	  $prog = $path.'convert '.  $cachefile.' jpeg:-';
 	else if ($prog=='jasper') $prog = $path.'jasper -f '.$cachefile.' -T jpg';
 
 
@@ -1496,21 +1496,23 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='')
 			return false;
 		}
 
-		/*
-		// from Asset Server
-		$asset_url = $ASSET_SERVER_URL.'/assets/'.$uuid;
+
+/*		// from Asset Server
+		//$asset_url = $ASSET_SERVER_URL.'/assets/'.$uuid;
+		$asset_url = 'http://202.26.159.200:8003/assets/'.$uuid;
 		$fp = fopen($asset_url, "rb");
 		stream_set_timeout($fp, 5);
 		$content = stream_get_contents($fp);
 		fclose($fp);
 		if (!$content) {
-			echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).'</h4>';
+			echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).')</h4>';
 			return false;
 		}
 
 		$xml = new SimpleXMLElement($content);
 		$imgdata = base64_decode($xml->Data);
-		*/
+*/
+
 
 		$fp = fopen($cachefile, 'wb');
 		fwrite($fp, $imgdata);
