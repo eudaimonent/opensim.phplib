@@ -1461,24 +1461,26 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 // for Asset
 //
 
-function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='')
+function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='', $use_tga=false)
 {
 	if ($cachedir=='') $cachedir = '/tmp';
 	$cachefile = $cachedir.'/'.$uuid;
 
 
 	if ($path=="") {
-		if (file_exists('/usr/local/bin/'.$prog)) $path = '/usr/local/bin/';
-		else if (file_exists('/usr/bin/'. $prog)) $path = '/usr/bin/';
+		if (file_exists('/usr/local/bin/'.$prog)) 	   $path = '/usr/local/bin/';
+		else if (file_exists('/usr/bin/'.$prog)) 	   $path = '/usr/bin/';
+		else if (file_exists('/usr/X11R6/bin/'.$prog)) $path = '/usr/X11R6/bin/';
+		else if (file_exists('/bin/'. $prog)) 		   $path = '/bin/';
 	}
-	if (!file_exists($path.$prog)) {
+	else if (!file_exists($path.$prog)) {
 		echo '<h4>program '.$path.$prog.' is not found!!</h4>';
 		return false;
 	}
 
 
 	// get and save image
-	if (!file_exists($cachefile) and !file_exists($cachefile.'.tga')) {
+	if (!file_exists($cachefile) and (!$use_tga or !file_exists($cachefile.'.tga'))) {
 		$imgdata = '';
 
 		// from MySQL Server
@@ -1515,7 +1517,7 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='')
 		fwrite($fp, $imgdata);
 		fclose($fp);
 
-		j2k_to_tga($cachefile);
+		if ($use_tga) j2k_to_tga($cachefile);
 	}
 
 
