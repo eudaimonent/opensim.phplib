@@ -50,6 +50,9 @@
  function  opensim_get_estate_owner($region, &$db=null)
  function  opensim_set_estate_owner($region, $owner, &$db=null)
 
+ function  opensim_get_parcel_name($parcel, &$db=null)
+ function  opensim_get_parcel_info($parcel, &$db=null)
+
  function  opensim_get_servers_ip(&$db=null)
 
  function  opensim_create_inventory_folders($uuid, &$db=null)
@@ -929,6 +932,7 @@ function  opensim_set_estate_owner($region, $owner, &$db=null)
 
 	$db->query("UPDATE estate_settings,estate_map SET EstateOwner='$owner' WHERE estate_settings.EstateID=estate_map.EstateID AND RegionID='$region'");
 	$errno = $db->Errno;
+
 	if ($errno==0) $db->query("UPDATE regions SET owner_uuid='$owner' WHERE uuid='$region'");
 
 	if ($errno!=0) return false;
@@ -937,6 +941,51 @@ function  opensim_set_estate_owner($region, $owner, &$db=null)
 
 
 
+
+/////////////////////////////////////////////////////////////////////////////////////
+//
+// for Parcel
+//
+
+function  opensim_get_parcel_name($parcel, &$db=null)
+{
+	if (!isGUID($parcel)) return null;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$name = null;
+	$db->query("SELECT name FROM land WHERE UUID='$parcel'");
+
+	if ($db->Errno==0) list($name) = $db->next_record();
+
+	return $name;
+}
+
+
+
+function  opensim_get_parcel_info($parcel, &$db=null)
+{
+	if (!isGUID($parcel)) return null;
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$info = array();
+
+	$items = "RegionUUID,Name,Description,OwnerUUID,Category,SalePrice,LandStatus,LandFlags,LandingType,Dwell";
+	$query_str = "SELECT ".$items." FROM land WHERE UUID='".$parcel."'";
+
+	$db->query($query_str);
+	if ($db->Errno==0) $info = $db->next_record();
+
+	return $info;
+}
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//
+// for Server
+//
 
 function  opensim_get_servers_ip(&$db=null)
 {
@@ -956,6 +1005,7 @@ function  opensim_get_servers_ip(&$db=null)
 
 	return $ips;
 }
+
 
 
 
