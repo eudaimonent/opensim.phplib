@@ -10,18 +10,17 @@
 
 /****************************************************************
  * Function List
- *
- *
- * function  isNumeric($str, $nullok=false)
- * function  isAlphabetNumeric($str, $nullok=false)
- * function  isAlphabetNumericSpecial($str, $nullok=false)
- * function  isGUID($uuid, $nullok=false)
- *
- * function  make_random_hash()
- * function  make_random_guid()
- *
- * function  j2k_to_tga($file) 		need j2k_to_image (OpenJpeg)
- *
+
+ function  isNumeric($str, $nullok=false)
+ function  isAlphabetNumeric($str, $nullok=false)
+ function  isAlphabetNumericSpecial($str, $nullok=false)
+ function  isGUID($uuid, $nullok=false)
+ 
+ function  make_random_hash()
+ function  make_random_guid()
+ 
+ function  j2k_to_tga($file, $iscopy=true) 		need j2k_to_image (OpenJpeg)
+
  ****************************************************************/
 
 
@@ -77,26 +76,34 @@ function  make_random_hash()
 function  make_random_guid()
 {
 	$uuid = sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
-            mt_rand( 0, 0x0fff ) | 0x4000,
-            mt_rand( 0, 0x3fff ) | 0x8000,   
-            mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ) );
+					mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
+        			mt_rand( 0, 0x0fff ) | 0x4000,
+        			mt_rand( 0, 0x3fff ) | 0x8000,   
+           			mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ) );
 	return $uuid;
 }
  
 
 
 
-function  j2k_to_tga($file)
+//
+// Convert Image from JPEG2000 to TGA
+// 
+function  j2k_to_tga($file, $iscopy=true)
 {
-	$com_totga = '';
+	if (!file_exists($file)) return false;
 
-	if (file_exists('/usr/local/bin/j2k_to_image')) $com_totga = '/usr/local/bin/j2k_to_image';
-	else if (file_exists('/usr/bin/j2k_to_image'))  $com_totga = '/usr/bin/j2k_to_image';
-	else if (file_exists('/bin/j2k_to_image'))      $com_totga = '/bin/j2k_to_image';
+	$com_totga = '';
+	if (file_exists('/usr/local/bin/j2k_to_image')) 	 $com_totga = '/usr/local/bin/j2k_to_image';
+	else if (file_exists('/usr/bin/j2k_to_image'))  	 $com_totga = '/usr/bin/j2k_to_image';
+	else if (file_exists('/usr/X11R6/bin/j2k_to_image')) $com_totga = '/usr/X11R6/bin/j2k_to_image';
+	else if (file_exists('/bin/j2k_to_image'))      	 $com_totga = '/bin/j2k_to_image';
+
 	if ($com_totga=='') return false;
 
-	$ret = rename($file, $file.'.j2k');
+
+	if ($iscopy) $ret = copy  ($file, $file.'.j2k');
+	else 		 $ret = rename($file, $file.'.j2k');
 	if (!$ret) return false;
 
 	exec("$com_totga -i $file.j2k -o $file.tga 1>/dev/null 2>&1");
