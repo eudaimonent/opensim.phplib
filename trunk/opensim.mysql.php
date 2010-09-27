@@ -1525,7 +1525,6 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 	if ($prog=='imagick') {
 		if (class_exists('Imagick')) {
 			$imagick = new Imagick();
-			$use_tga = false;
 		}
 		else {
 			echo '<h4>PHP module Imagick is not installed!!</h4>';
@@ -1544,7 +1543,7 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 			return false;
 		}
 
-		if ($prog=='jasper') {
+		if ($prog=='jasper') {		// JasPer does not support TGA format.
 			$use_tga = false;
 		}
 	}
