@@ -1548,10 +1548,16 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 		}
 	}
 
+	
+	// Check j2k to TGA command
+	if ($use_tga) {
+		$tga_com = get_j2k_to_tga_command();
+		if ($tga_com=='') $use_tga = false;
+	}
+
 
 	// get and save image
-	//if (!file_exists($cachefile) and (!$use_tga or !file_exists($cachefile.'.tga'))) {
-	if (!(!$use_tga and file_exists($cachefile) or ($use_tga and file_exists($cachefile.'.tga')))) {
+	if (! ((!$use_tga and file_exists($cachefile)) or ($use_tga and file_exists($cachefile.'.tga')))) {
 		$imgdata = '';
 
 		// from MySQL Server

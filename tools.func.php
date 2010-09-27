@@ -100,12 +100,7 @@ function  j2k_to_tga($file, $iscopy=true)
 {
 	if (!file_exists($file)) return false;
 
-	$com_totga = '';
-	if (file_exists('/usr/local/bin/j2k_to_image')) 	 $com_totga = '/usr/local/bin/j2k_to_image';
-	else if (file_exists('/usr/bin/j2k_to_image'))  	 $com_totga = '/usr/bin/j2k_to_image';
-	else if (file_exists('/usr/X11R6/bin/j2k_to_image')) $com_totga = '/usr/X11R6/bin/j2k_to_image';
-	else if (file_exists('/bin/j2k_to_image'))      	 $com_totga = '/bin/j2k_to_image';
-
+	$com_totga = get_j2k_to_tga_command();
 	if ($com_totga=='') return false;
 
 
@@ -118,6 +113,22 @@ function  j2k_to_tga($file, $iscopy=true)
 
 	return true;
 }
+
+
+
+function  get_j2k_to_tga_command()
+{
+	$prog = 'j2k_to_image';
+
+	$com_totga = '';
+	if (file_exists('/usr/local/bin/'.$prog))	   $com_totga = '/usr/local/bin/'.$prog;
+	else if (file_exists('/usr/bin/'.$prog))	   $com_totga = '/usr/bin/'.$prog;
+	else if (file_exists('/usr/X11R6/bin/'.$prog)) $com_totga = '/usr/X11R6/bin/'.$prog;
+	else if (file_exists('/bin/'.$prog))		   $com_totga = '/bin/'.$prog;
+
+	return $com_totga;
+}
+
 
 
 
