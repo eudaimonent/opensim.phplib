@@ -1516,16 +1516,20 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 	if (!isGuid($uuid)) return false;
 	if ($prog==null or $prog=='') return false;
 
-
 	if ($cachedir=='') $cachedir = '/tmp';
 	$cachefile = $cachedir.'/'.$uuid;
+
+	$imagick = null;
+
+//	$prog = 'imagick';
 
 
 	// PHP module
 	if ($prog=='imagick') {
 		if (class_exists('Imagick')) {
-
-
+			$imagick = new Imagick();
+			if ($imagick!=null) $imagick->setImageFormat('JPEG'); 
+			$use_tga = false;
 		}
 		else {
 			echo '<h4>PHP module Imagick is not installed!!</h4>';
@@ -1550,19 +1554,6 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 	}
 
 
-	// CONVERT
-
-
-
-
-
-
-
-
-
-
-
-
 	// get and save image
 	if (!file_exists($cachefile) and (!$use_tga or !file_exists($cachefile.'.tga'))) {
 		$imgdata = '';
@@ -1578,7 +1569,6 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 			echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).')</h4>';
 			return false;
 		}
-
 
 /*		// from Asset Server
 		//$asset_url = $ASSET_SERVER_URL.'/assets/'.$uuid;
@@ -1596,7 +1586,7 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 		$imgdata = base64_decode($xml->Data);
 */
 
-
+		// Save Image Data
 		$fp = fopen($cachefile, 'wb');
 		fwrite($fp, $imgdata);
 		fclose($fp);
@@ -1608,14 +1598,28 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 	if ($use_tga && file_exists($cachefile.'.tga')) $cachefile .= '.tga';
 
 
+
+	header("Content-Type: image/jpeg"); 
+
 	//
 	// program for image processing of jpeg2000
 	//
+
+	// Imagick module of PHP
+	if ($prog=='imagick' and $imagick!=null) {
+		$imagick->readImage($cachefile);
+		if ($xsize>0 and $ysize>0) {
+			$imagick->resizeImage($xsize, $ysize, Imagick::FILTER_CUBIC, 1);
+		}
+		echo $imagick->getImageBlob();
+	}
+
 	// ImageMagic (convert)
-	if ($prog=='convert') {
+	else if ($prog=='convert') {
 		$imgsize = '';
 		if ($xsize>0 and $ysize>0) $imgsize = ' -resize '.$xsize.'x'.$ysize.'!';
 		$prog = $path.'convert '. $cachefile.$imgsize.' jpeg:-';
+	passthru($prog);
 	}
 
 	// Jasper
@@ -1626,12 +1630,11 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 			if ($conv!='') $conv = ' | '.$conv;
 		}
 		$prog = $path.'jasper -f '.$cachefile.' -T jpg'.$conv;
+	passthru($prog);
 	}
 
 
 	// display image
-	header("Content-Type: image/jpeg"); 
-	passthru($prog);
 
 	return true;
 }
