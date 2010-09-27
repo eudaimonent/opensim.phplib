@@ -1543,14 +1543,15 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 			return false;
 		}
 
-		if ($prog=='jasper') {		// JasPer does not support TGA format.
+		if ($prog=='jasper') {		// JasPer does not support Targa image format.
 			$use_tga = false;
 		}
 	}
 
 
 	// get and save image
-	if (!file_exists($cachefile) and (!$use_tga or !file_exists($cachefile.'.tga'))) {
+	//if (!file_exists($cachefile) and (!$use_tga or !file_exists($cachefile.'.tga'))) {
+	if (!(!$use_tga and file_exists($cachefile) or ($use_tga and file_exists($cachefile.'.tga')))) {
 		$imgdata = '';
 
 		// from MySQL Server
@@ -1589,9 +1590,7 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 		if ($use_tga) j2k_to_tga($cachefile);
 	}
 
-
 	if ($use_tga && file_exists($cachefile.'.tga')) $cachefile .= '.tga';
-
 
 
 	//
@@ -1636,9 +1635,6 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 		header("Content-Type: image/jpeg"); 
 		passthru($prog);
 	}
-
-
-	// display image
 
 	return true;
 }
