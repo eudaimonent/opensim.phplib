@@ -86,8 +86,14 @@ function  make_random_guid()
 
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Image
+//
+
 //
 // Convert Image from JPEG2000 to TGA
+//		file -> file.tga
 // 
 function  j2k_to_tga($file, $iscopy=true)
 {
@@ -111,5 +117,30 @@ function  j2k_to_tga($file, $iscopy=true)
 
 	return true;
 }
+
+
+
+//
+// Image Size Convert Command String
+//
+function  get_image_size_convert_command($xsize, $ysize)
+{
+	if (!isNumeric($xsize) or !isNumeric($ysize)) return '';
+
+	$prog = 'convert';
+	$path = '';
+
+	if (file_exists('/usr/local/bin/'.$prog)) 	   $path = '/usr/local/bin/';
+	else if (file_exists('/usr/bin/'.$prog))  	   $path = '/usr/bin/';
+	else if (file_exists('/usr/X11R6/bin/'.$prog)) $path = '/usr/X11R6/bin/';
+	else if (file_exists('/bin/'.$prog))      	   $path = '/bin/';
+	else return '';
+
+	$prog = $path.$prog.' - -geometry '.$xsize.'x'.$ysize.'! -';
+
+	return $prog;
+}
+
+
 
 ?>
