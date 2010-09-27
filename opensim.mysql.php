@@ -1587,7 +1587,9 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 		fwrite($fp, $imgdata);
 		fclose($fp);
 
-		if ($use_tga) j2k_to_tga($cachefile);
+		if ($use_tga) {
+			if (!j2k_to_tga($cachefile)) $use_tga = false;
+		}
 	}
 
 	if ($use_tga && file_exists($cachefile.'.tga')) $cachefile .= '.tga';
