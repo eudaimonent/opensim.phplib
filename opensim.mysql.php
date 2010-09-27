@@ -1519,16 +1519,12 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 	if ($cachedir=='') $cachedir = '/tmp';
 	$cachefile = $cachedir.'/'.$uuid;
 
-	$imagick = null;
-
-//	$prog = 'imagick';
-
 
 	// PHP module
+	$imagick = null;
 	if ($prog=='imagick') {
 		if (class_exists('Imagick')) {
 			$imagick = new Imagick();
-			if ($imagick!=null) $imagick->setImageFormat('JPEG'); 
 			$use_tga = false;
 		}
 		else {
@@ -1599,19 +1595,24 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 
 
 
-	header("Content-Type: image/jpeg"); 
-
 	//
 	// program for image processing of jpeg2000
 	//
 
-	// Imagick module of PHP
+	// Imagick of PHP
 	if ($prog=='imagick' and $imagick!=null) {
-		$imagick->readImage($cachefile);
-		if ($xsize>0 and $ysize>0) {
-			$imagick->resizeImage($xsize, $ysize, Imagick::FILTER_CUBIC, 1);
+		$ret = $imagick->readImage($cachefile);
+		if (!$ret) {
+			echo '<h4>Imagick could not read '.$cachefile.'!!</h4>';
+			return false;
 		}
-		echo $imagick->getImageBlob();
+		$imagick->setImageFormat('JPEG'); 
+		if ($xsize>0 and $ysize>0) {
+			$imagick->scaleImage($xsize, $ysize);
+		}
+
+		header("Content-Type: image/jpeg"); 
+		echo $imagick;
 	}
 
 	// ImageMagic (convert)
@@ -1619,7 +1620,9 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 		$imgsize = '';
 		if ($xsize>0 and $ysize>0) $imgsize = ' -resize '.$xsize.'x'.$ysize.'!';
 		$prog = $path.'convert '. $cachefile.$imgsize.' jpeg:-';
-	passthru($prog);
+
+		header("Content-Type: image/jpeg"); 
+		passthru($prog);
 	}
 
 	// Jasper
@@ -1630,7 +1633,9 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 			if ($conv!='') $conv = ' | '.$conv;
 		}
 		$prog = $path.'jasper -f '.$cachefile.' -T jpg'.$conv;
-	passthru($prog);
+
+		header("Content-Type: image/jpeg"); 
+		passthru($prog);
 	}
 
 
