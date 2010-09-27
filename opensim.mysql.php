@@ -1511,22 +1511,56 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 // for Asset
 //
 
-function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='', $use_tga=false)
+function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
 {
+	if (!isGuid($uuid)) return false;
+	if ($prog==null or $prog=='') return false;
+
+
 	if ($cachedir=='') $cachedir = '/tmp';
 	$cachefile = $cachedir.'/'.$uuid;
 
 
-	if ($path=="") {
+	// PHP module
+	if ($prog=='imagick') {
+		if (class_exists('Imagick')) {
+
+
+		}
+		else {
+			echo '<h4>PHP module Imagick is not installed!!</h4>';
+			return false;
+		}
+	}
+
+	// Linux Command
+	else {
 		if (file_exists('/usr/local/bin/'.$prog)) 	   $path = '/usr/local/bin/';
 		else if (file_exists('/usr/bin/'.$prog)) 	   $path = '/usr/bin/';
 		else if (file_exists('/usr/X11R6/bin/'.$prog)) $path = '/usr/X11R6/bin/';
 		else if (file_exists('/bin/'. $prog)) 		   $path = '/bin/';
+		else {
+			echo '<h4>program '.$prog.' is not found!!</h4>';
+			return false;
+		}
+
+		if ($prog=='jasper') {
+			$use_tga = false;
+		}
 	}
-	else if (!file_exists($path.$prog)) {
-		echo '<h4>program '.$path.$prog.' is not found!!</h4>';
-		return false;
-	}
+
+
+	// CONVERT
+
+
+
+
+
+
+
+
+
+
 
 
 	// get and save image
@@ -1571,11 +1605,28 @@ function  opensim_display_texture_data($uuid, $prog, $path='', $cachedir='', $us
 	}
 
 
-	if (file_exists($cachefile.'.tga')) $cachefile .= '.tga';
+	if ($use_tga && file_exists($cachefile.'.tga')) $cachefile .= '.tga';
 
+
+	//
 	// program for image processing of jpeg2000
-	if ($prog=='convert')	  $prog = $path.'convert '.  $cachefile.' jpeg:-';
-	else if ($prog=='jasper') $prog = $path.'jasper -f '.$cachefile.' -T jpg';
+	//
+	// ImageMagic (convert)
+	if ($prog=='convert') {
+		$imgsize = '';
+		if ($xsize>0 and $ysize>0) $imgsize = ' -resize '.$xsize.'x'.$ysize.'!';
+		$prog = $path.'convert '. $cachefile.$imgsize.' jpeg:-';
+	}
+
+	// Jasper
+	else if ($prog=='jasper') {
+		$conv = '';
+		if ($xsize>0 and $ysize>0) {
+			$conv = get_image_size_convert_command($xsize, $ysize);
+			if ($conv!='') $conv = ' | '.$conv;
+		}
+		$prog = $path.'jasper -f '.$cachefile.' -T jpg'.$conv;
+	}
 
 
 	// display image
