@@ -19,7 +19,11 @@
  function  make_random_hash()
  function  make_random_guid()
  
- function  j2k_to_tga($file, $iscopy=true) 		need j2k_to_image (OpenJpeg)
+ function  j2k_to_tga($file, $iscopy=true)
+ function  get_j2k_to_tga_command() 			// need j2k_to_image (OpenJpeg)
+ function  get_image_size_convert_command($xsize, $ysize)
+
+ function  find_command_path($command)
 
  ****************************************************************/
 
@@ -103,7 +107,6 @@ function  j2k_to_tga($file, $iscopy=true)
 	$com_totga = get_j2k_to_tga_command();
 	if ($com_totga=='') return false;
 
-
 	if ($iscopy) $ret = copy  ($file, $file.'.j2k');
 	else 		 $ret = rename($file, $file.'.j2k');
 	if (!$ret) return false;
@@ -118,15 +121,8 @@ function  j2k_to_tga($file, $iscopy=true)
 
 function  get_j2k_to_tga_command()
 {
-	$prog = 'j2k_to_image';
-
-	$com_totga = '';
-	if (file_exists('/usr/local/bin/'.$prog))	   $com_totga = '/usr/local/bin/'.$prog;
-	else if (file_exists('/usr/bin/'.$prog))	   $com_totga = '/usr/bin/'.$prog;
-	else if (file_exists('/usr/X11R6/bin/'.$prog)) $com_totga = '/usr/X11R6/bin/'.$prog;
-	else if (file_exists('/bin/'.$prog))		   $com_totga = '/bin/'.$prog;
-
-	return $com_totga;
+	$command = find_command_path('j2k_to_image');
+	return $command;
 }
 
 
@@ -139,20 +135,27 @@ function  get_image_size_convert_command($xsize, $ysize)
 {
 	if (!isNumeric($xsize) or !isNumeric($ysize)) return '';
 
-	$prog = 'convert';
-	$path = '';
+	$command = find_command_path('convert');
+	if ($command=='') return '';
 
-	if (file_exists('/usr/local/bin/'.$prog)) 	   $path = '/usr/local/bin/';
-	else if (file_exists('/usr/bin/'.$prog))  	   $path = '/usr/bin/';
-	else if (file_exists('/usr/X11R6/bin/'.$prog)) $path = '/usr/X11R6/bin/';
-	else if (file_exists('/bin/'.$prog))      	   $path = '/bin/';
-	else return '';
-
-	$prog = $path.$prog.' - -geometry '.$xsize.'x'.$ysize.'! -';
-
+	$prog = $command.' - -geometry '.$xsize.'x'.$ysize.'! -';
 	return $prog;
 }
 
+
+
+
+function  find_command_path($command)
+{
+	$path = '';
+	if (file_exists('/usr/local/bin/'.$command))	  $path = '/usr/local/bin/';
+	else if (file_exists('/usr/bin/'.$command))		  $path = '/usr/bin/';
+	else if (file_exists('/usr/X11R6/bin/'.$command)) $path = '/usr/X11R6/bin/';
+	else if (file_exists('/bin/'.$command))			  $path = '/bin/';
+	else return '';
+
+	return $path.$command;
+}
 
 
 ?>

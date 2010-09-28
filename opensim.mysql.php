@@ -72,7 +72,7 @@
  function  opensim_get_voice_mode($region, &$db=null)
  function  opensim_set_voice_mode($region, $mode, &$db=null)
  
- function  opensim_display_texture_data($uuid, $prog, $path='', $tempfile='')
+ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
 
  //
  function  opensim_is_access_from_region_server()
