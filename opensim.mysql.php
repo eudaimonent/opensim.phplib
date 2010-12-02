@@ -600,7 +600,7 @@ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregi
 		}
 
 		// for 0.6
-		else if ($db->exist_table('users') and $errno==0) {
+		else if ($db->exist_table('users')) {
 			$db->query('INSERT INTO users (UUID,username,lastname,passwordHash,passwordSalt,homeRegion,'.
 										  'homeLocationX,homeLocationY,homeLocationZ,homeLookAtX,homeLookAtY,homeLookAtZ,'.
 										  'created,lastLogin,userInventoryURI,userAssetURI,profileCanDoMask,profileWantDoMask,'.
