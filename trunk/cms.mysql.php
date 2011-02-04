@@ -1,6 +1,6 @@
 <?php
 /*********************************************************************************
- * cms.mysql.php v1.0.0 for OpenSim 	by Fumi.Iseki  2011 1/27
+ * env.mysql.php v1.0.0 for OpenSim 	by Fumi.Iseki  2011 1/27
  *
  * 			Copyright (c) 2011   http://www.nsl.tuis.ac.jp/
  *
@@ -15,8 +15,8 @@
  * Function List
 
 // for Currency
- function cms_set_money_transaction($sourceId, $destId, $amount, $type, $falgs, $desc, $prminvent, $nxtowner, $ip)
- function cms_get_money_balance($uuid)
+ function env_set_money_transaction($sourceId, $destId, $amount, $type, $falgs, $desc, $prminvent, $nxtowner, $ip)
+ function env_get_money_balance($uuid)
 
 **********************************************************************************/
 
@@ -37,7 +37,7 @@ require_once(CMS_MODULE_PATH.'/include/mysql.func.php');
 //
 // for Currency
 
-function cms_set_money_transaction($sourceId, $destId, $amount, $type, $falgs, $desc, $prminvent, $nxtowner, $ip)
+function env_set_money_transaction($sourceId, $destId, $amount, $type, $falgs, $desc, $prminvent, $nxtowner, $ip)
 {
     if (!isNumeric($amount)) return;
 	if (!isGUID($sourceId))  $sourceId = '00000000-0000-0000-0000-000000000000';
@@ -72,7 +72,7 @@ function cms_set_money_transaction($sourceId, $destId, $amount, $type, $falgs, $
 
 
 
-function cms_get_money_balance($uuid)
+function env_get_money_balance($uuid)
 {
 	if (!isGUID($uuid)) return -1;
 
