@@ -2,7 +2,7 @@
 /*********************************************************************************
  * opensim.mysql.php v1.0.0 for OpenSim 	by Fumi.Iseki  2010 5/13
  *
- * 			Copyright (c) 2009, 2010   http://www.nsl.tuis.ac.jp/
+ * 			Copyright (c) 2009,2010,2011   http://www.nsl.tuis.ac.jp/
  *
  *			supported versions of OpenSim are 0.6.7, 0.6.8, 0.6.9, 0.7 and 0.7.1Dev
  *			tools.func.php is needed
@@ -12,72 +12,85 @@
 
 
 /*********************************************************************************
- Function List
+ * Function List
 
- function  opensim_new_db($connect=false)
-
+// for DB
+ function  opensim_new_db($timeout=60)
  function  opensim_get_db_version(&$db=null)
- function  opensim_check_db(&$db=null)
  function  opensim_users_update_time(&$db=null)
  function  opensim_get_update_time($table, &$db=null)
+ function  opensim_check_db(&$db=null)
 
- //
+// for Avatar
+ function  opensim_get_avatars_num(&$db=null)
  function  opensim_get_avatar_name($uuid, &$db=null)
  function  opensim_get_avatar_uuid($name, &$db=null)
+ function  opensim_get_avatar_session($uuid, &$db=null)
  function  opensim_get_avatar_info($uuid, &$db=null)
- function  opensim_get_avatar_online($uuid, &$db=null)
-
- function  opensim_get_avatar_flags($uuid, &$db=null)
- function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
-
- function  opensim_get_avatars_num(&$db=null)
  function  opensim_get_avatars_infos($condition='', &$db=null)
  function  opensim_get_avatars_profiles_from_users($condition='', &$db=null)
-
+ function  opensim_get_avatar_online($uuid, &$db=null)
+ function  opensim_get_avatar_flags($uuid, &$db=null)
+ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
  function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, &$db=null)
  function  opensim_delete_avatar($uuid, &$db=null)
 
- function  opensim_clear_login_table(&$db=null)
- 
- function  opensim_get_region_name($region, &$db=null)
- function  opensim_get_region_uuid($name, &$db=null)
- function  opensim_get_region_info($region, &$db=null)
-
+// for Region
  function  opensim_get_regions_num(&$db=null)
+ function  opensim_get_region_uuid($name, &$db=null)
+ function  opensim_get_region_name($id, &$db=null)
  function  opensim_get_regions_names($condition='', &$db=null)
+ function  opensim_get_region_info($region, &$db=null)
  function  opensim_get_regions_infos($condition='', &$db=null)
+ function  opensim_set_current_region($uuid, $regionid, &$db=null)
 
- function  opensim_get_estate_owner($region, &$db=null)
- function  opensim_set_estate_owner($region, $owner, &$db=null)
-
- function  opensim_get_parcel_name($parcel, &$db=null)
- function  opensim_get_parcel_info($parcel, &$db=null)
-
- function  opensim_get_servers_ip(&$db=null)
-
- function  opensim_create_inventory_folders($uuid, &$db=null)
+// for Home Region
  function  opensim_get_home_region($uuid, &$db=null)
  function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', $pos_z='0', &$db=null)
 
+// for Estate Owner
+ function  opensim_get_estate_owner($region, &$db=null)
+ function  opensim_set_estate_owner($region, $owner, &$db=null)
+
+// for Parcel
+ function  opensim_get_parcel_name($parcel, &$db=null)
+ function  opensim_get_parcel_info($parcel, &$db=null)
+
+// for Assets
+ function  opensim_get_asset_data($uuid, &$db=null)
+ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
+
+// for Inventory
+ function  opensim_create_inventory_folders($uuid, &$db=null)
+
+// for Password
  function  opensim_get_password($uuid, $tbl='', &$db=null)
  function  opensim_set_password($uuid, $passwdhash, $passwdsalt='', $tbl='', &$db=null)
- function  opensim_supply_passwordSalt(&$db=null)
 
+// for Update Data Base
+//function  opensim_supply_passwordSalt(&$db=null)
  function  opensim_succession_agents_to_griduser($region_id, &$db=null)
  function  opensim_succession_useraccounts_to_griduser($region_id, &$db=null)
  function  opensim_succession_data($region_name, &$db=null)
 
- function  opensim_recreate_presence(&$db=null)
-
+// for Voice (VoIP)
  function  opensim_get_voice_mode($region, &$db=null)
  function  opensim_set_voice_mode($region, $mode, &$db=null)
- 
- function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
 
- //
+// for Currency
+ function opensim_set_currency_transaction($sourceId, $destId, $amount, $flags, $type, $description, $userip, &$db=null)
+ function opensim_set_currency_balance($uuid, $userip, $amount, &$db=null)
+ function opensim_get_currency_balance($uuid, $userip, &$db=null)
+
+// Tools
+ function  opensim_get_servers_ip(&$db=null)
+ function  opensim_get_server_info($uuid, &$db=null)
  function  opensim_is_access_from_region_server()
+ function  opensim_check_secure_session($uuid, $regoinid, $secure, &$db=null)
+ function  opensim_check_secret_region($uuid, $secret, &$db=null)
+ function  opensim_clear_login_table(&$db=null)
 
- *********************************************************************************/
+**********************************************************************************/
 
 
 
@@ -290,6 +303,37 @@ function  opensim_get_avatar_uuid($name, &$db=null)
 
 
 
+function  opensim_get_avatar_session($uuid, &$db=null)
+{
+	if (!isGUID($uuid)) return null;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	if ($db->exist_table('Presence')) {			// 0.7
+		$sql = "SELECT RegionID,SessionID,SecureSessionID,LastSeen FROM Presence WHERE UserID='".$uuid."'";
+		$db->query($sql);
+		list($RegionID, $SessionID, $SecureSessionID, $LastSeen) = $db->next_record();
+		$LastLogin = $LastSeen;		//
+	}
+	else if ($db->exist_table('agents')) {		// 0.6x
+		$sql = "SELECT currentRegion,sessionID,secureSessionID,logionTime FROM agents WHERE UUID='".$uuid."'";
+		$db->query($sql);
+		list($RegionID, $SessionID, $SecureSessionID, $LastLogin) = $db->next_record();
+	}
+	else {
+		return null;
+	}
+
+	$avssn['regionID']  = $RegionID;
+	$avssn['sessionID'] = $SessionID;
+	$avssn['secureID']  = $SecureSessionID;
+	$avssn['lastlogin'] = $LastLogin;
+	
+	return $avssn;
+}
+
+
+
 function  opensim_get_avatar_info($uuid, &$db=null)
 {
 	if (!isGUID($uuid)) return null;
@@ -437,7 +481,7 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 	$region	  	 = '00000000-0000-0000-0000-000000000000';
 	$rgn_name	 = '';
 
-
+	/*
 	if ($db->exist_field('Presence', 'Online')) {	// old 0.7Dev
 		$db->query("SELECT Online,RegionID FROM Presence WHERE UserID='$uuid' and RegionID!='$null_region'");
 		if ($db->Errno==0) {
@@ -448,7 +492,9 @@ function  opensim_get_avatar_online($uuid, &$db=null)
 			}
 		}
 	}
-	else if ($db->exist_table('Presence')) {		// 0.7
+	*/
+
+	if ($db->exist_table('Presence')) {		// 0.7
 		$db->query("SELECT RegionID FROM Presence,GridUser WHERE Presence.UserID='$uuid'".
 					" and RegionID!='$null_region' and Presence.UserID=GridUser.UserID and GridUser.Online='True'");
 		if ($db->Errno==0) {
@@ -543,16 +589,12 @@ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
 
 
 
-
-
-
-
 function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, &$db=null)
 {
 	if (!isGUID($UUID)) return false;
 	if (!isAlphabetNumericSpecial($firstname))  return false;
 	if (!isAlphabetNumericSpecial($lastname))   return false;
-	if (!isAlphabetNumericSpecial($passwd))	 return false;
+	if (!isAlphabetNumericSpecial($passwd))		return false;
 	if (!isAlphabetNumericSpecial($homeregion)) return false;
 
 	if (!is_object($db)) $db = & opensim_new_db();
@@ -669,26 +711,6 @@ function  opensim_delete_avatar($uuid, &$db=null)
 
 
 
-function  opensim_clear_login_table(&$db=null)
-{
-	if (!is_object($db)) $db = & opensim_new_db();
-
-	if ($db->exist_table('Presence')) {
-		$db->query("DELETE FROM Presence");
-	}
-	else if ($db->exist_table('agents')) {
-		//$db->query("DELETE FROM agents");
-		return true;
-	}
-	else {
-		return false;
-	}
-
-	return true;
-}
-
-
-
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
@@ -767,14 +789,19 @@ function  opensim_get_regions_names($condition='', &$db=null)
 function  opensim_get_region_info($region, &$db=null)
 {
 	if (!isGUID($region)) return null;
+	if ($region=='00000000-0000-0000-0000-000000000000') return null;
 
 	if (!is_object($db)) $db = & opensim_new_db();
 
-	$db->query("SELECT regionName,serverIP,serverHttpPort,serverURI,locX,locY FROM regions WHERE uuid='$region'");
-	list($regionName, $serverIP, $serverHttpPort, $serverURI, $locX, $locY) = $db->next_record();
+	$sql = "SELECT regionHandle,regionName,regionSecret,serverIP,serverHttpPort,serverURI,locX,locY FROM regions WHERE uuid='$region'";
+	$db->query($sql);
+
+	list($regionHandle, $regionName, $regionSecret, $serverIP, $serverHttpPort, $serverURI, $locX, $locY) = $db->next_record();
 	$rginfo = opensim_get_estate_owner($region, $db);
 
+	$rginfo['regionHandle']   = $regionHandle;
 	$rginfo['regionName'] 	  = $regionName;
+	$rginfo['regionSecret']   = $regionSecret;
 	$rginfo['serverIP'] 	  = $serverIP;
 	$rginfo['serverHttpPort'] = $serverHttpPort;
 	$rginfo['serverURI'] 	  = $serverURI;
@@ -873,11 +900,93 @@ function  opensim_get_regions_infos($condition='', &$db=null)
 
 
 
+function  opensim_set_current_region($uuid, $regionid, &$db=null)
+{
+	if (!isGUID($uuid) or !isGUID($regionid)) return false;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	if ($db->exist_table("Presence")) {
+		$sql = "UPDATE Presence SET RegionID='".$regionid."' WHERE UserID='". $uuid."'";
+	}
+	else {
+		$sql = "UPDATE agents SET currentRegion='".$regionid."' WHERE UUID='".$uuid."'";
+	}
+
+	$db->query($sql);
+	if ($db->Errno!=0) return false;
+
+	$db->next_record();
+	return true;
+}
+
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
-// for Region Owner
+// for Home Region
+//
+
+function  opensim_get_home_region($uuid, &$db=null)
+{
+	if (!isGUID($uuid)) return null;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$region_name = '';
+	if ($db->exist_table('GridUser')) {
+		$db->query("SELECT regionName FROM GridUser,regions WHERE HomeRegionID=uuid AND UserID='$uuid'");
+		list($region_name) = $db->next_record();
+	}
+	else if ($db->exist_table('users')) {
+		$db->query("SELECT regionName FROM users,regions WHERE homeRegionID=regions.uuid AND users.UUID='$uuid'");
+		list($region_name) = $db->next_record();
+	}
+
+	return $region_name;
+}
+
+
+
+function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', $pos_z='0', &$db=null)
+{
+	if (!isGUID($uuid)) return false;
+	if (!isAlphabetNumericSpecial($hmregion)) return false;
+	if (!isNumeric($pos_x) or !isNumeric($pos_y) or !isNumeric($pos_z)) return false;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$db->query("SELECT uuid,regionHandle FROM regions WHERE regionName='$hmregion'");
+	$errno = $db->Errno;
+	if ($errno==0) {
+		list($regionID, $regionHandle) = $db->next_record();
+
+		if ($db->exist_table('GridUser')) {
+			$homePosition = "<$pos_x,$pos_y,$pos_z>";
+			$db->query("UPDATE GridUser SET HomeRegionID='$regionID',HomePosition='$homePosition' WHERE UserID='$uuid'");
+			$errno = $db->Errno;
+		}
+
+		if ($db->exist_table('users') and $errno==0) {
+			$homePosition = "homeLocationX='$pos_x',homeLocationY='$pos_y',homeLocationZ='$pos_z' ";
+			$db->query("UPDATE users SET homeRegion='$regionHandle',homeRegionID='$regionID',$homePosition WHERE UUID='$uuid'");
+			if ($db->Errno!=0) {
+				if (!$db->exist_table('auth')) $errno = 99;
+			}
+		}
+	}
+
+	if ($errno!=0) return false;
+	return true;
+}
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//
+// for Estate Owner
 //
 
 //
@@ -985,29 +1094,168 @@ function  opensim_get_parcel_info($parcel, &$db=null)
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
-// for Server
+// for Assets
 //
 
-function  opensim_get_servers_ip(&$db=null)
+function  opensim_get_asset_data($uuid, &$db=null)
 {
+	$asset = array();
+
+	if (!isGUID($uuid)) return $asset;
 	if (!is_object($db)) $db = & opensim_new_db();
 
-	$ips = array();
+	$db->query("SELECT name,description,assetType,data,asset_flags,CreatorID FROM assets WHERE id='$uuid'");
+	list($name, $desc, $type, $data, $flag, $creator) = $db->next_record();
 
-	$db->query("SELECT DISTINCT serverIP FROM regions");
+	$asset['UUID'] 	  = $uuid;
+	$asset['name'] 	  = $name;
+	$asset['desc'] 	  = $desc;
+	$asset['type'] 	  = $type;
+	$asset['data'] 	  = $data;
+	$asset['flag'] 	  = $flag;
+	$asset['creator'] = $creator;
 
-	if ($db->Errno==0) {
-		$count = 0;
-		while (list($serverIP) = $db->next_record()) {
-			$ips[$count] = $serverIP;
-			$count++;
-		}		
-	}
-
-	return $ips;
+	return $asset;
 }
 
 
+
+function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
+{
+	if (!isGuid($uuid)) return false;
+	if ($prog==null or $prog=='') return false;
+
+	if ($cachedir=='') $cachedir = '/tmp';
+	$cachefile = $cachedir.'/'.$uuid;
+
+
+	// PHP module
+	$imagick = null;
+	if ($prog=='imagick') {
+		if (class_exists('Imagick')) {
+			$imagick = new Imagick();
+		}
+		else {
+			echo '<h4>PHP module Imagick is not installed!!</h4>';
+			return false;
+		}
+	}
+
+	// Linux Command
+	else {
+		if (file_exists('/usr/local/bin/'.$prog)) 	   $path = '/usr/local/bin/';
+		else if (file_exists('/usr/bin/'.$prog)) 	   $path = '/usr/bin/';
+		else if (file_exists('/usr/X11R6/bin/'.$prog)) $path = '/usr/X11R6/bin/';
+		else if (file_exists('/bin/'. $prog)) 		   $path = '/bin/';
+		else {
+			echo '<h4>program '.$prog.' is not found!!</h4>';
+			return false;
+		}
+
+		if ($prog=='jasper') {		// JasPer does not support Targa image format.
+			$use_tga = false;
+		}
+	}
+
+	
+	// Check j2k to TGA command
+	if ($use_tga) {
+		$tga_com = get_j2k_to_tga_command();
+		if ($tga_com=='') $use_tga = false;
+	}
+
+
+	// get and save image
+	if (! ((!$use_tga and file_exists($cachefile)) or ($use_tga and file_exists($cachefile.'.tga')))) {
+		$imgdata = '';
+
+		// from MySQL Server
+		$asset = opensim_get_asset_data($uuid);
+		if ($asset) {
+			if ($asset['type']==0) {
+				$imgdata = $asset['data'];
+			}
+		}
+		else {
+			echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).')</h4>';
+			return false;
+		}
+
+/*		// from Asset Server
+		//$asset_url = $ASSET_SERVER_URL.'/assets/'.$uuid;
+		$asset_url = 'http://202.26.159.200:8003/assets/'.$uuid;
+		$fp = fopen($asset_url, "rb");
+		stream_set_timeout($fp, 5);
+		$content = stream_get_contents($fp);
+		fclose($fp);
+		if (!$content) {
+			echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).')</h4>';
+			return false;
+		}
+
+		$xml = new SimpleXMLElement($content);
+		$imgdata = base64_decode($xml->Data);
+*/
+
+		// Save Image Data
+		$fp = fopen($cachefile, 'wb');
+		fwrite($fp, $imgdata);
+		fclose($fp);
+
+		if ($use_tga) {
+			if (!j2k_to_tga($cachefile)) $use_tga = false;
+		}
+	}
+
+	if ($use_tga && file_exists($cachefile.'.tga')) $cachefile .= '.tga';
+
+
+	//
+	// program for image processing of jpeg2000
+	//
+
+	// Imagick of PHP
+	if ($prog=='imagick' and $imagick!=null) {
+		$ret = $imagick->readImage($cachefile);
+		if (!$ret) {
+			echo '<h4>Imagick could not read '.$cachefile.'!!</h4>';
+			return false;
+		}
+		$imagick->setImageFormat('JPEG'); 
+		if ($xsize>0 and $ysize>0) {
+			$imagick->scaleImage($xsize, $ysize);
+		}
+
+		header("Content-Type: image/jpeg"); 
+		echo $imagick;
+	}
+
+	// ImageMagic (convert)
+	else if ($prog=='convert') {
+		$imgsize = '';
+		if ($xsize>0 and $ysize>0) $imgsize = ' -resize '.$xsize.'x'.$ysize.'!';
+		$prog = $path.'convert '. $cachefile.$imgsize.' jpeg:-';
+
+		header("Content-Type: image/jpeg"); 
+		passthru($prog);
+	}
+
+	// Jasper
+	else if ($prog=='jasper') {
+		$conv = '';
+		if ($xsize>0 and $ysize>0) {
+			$conv = get_image_size_convert_command($xsize, $ysize);
+			if ($conv!='') $conv = ' | '.$conv;
+		}
+		$prog = $path.'jasper -f '.$cachefile.' -T jpg'.$conv;
+
+		header("Content-Type: image/jpeg"); 
+		passthru($prog);
+	}
+
+	return true;
+}
+ 
 
 
 
@@ -1103,66 +1351,6 @@ function  opensim_create_inventory_folders($uuid, &$db=null)
 
 
  
-
-/////////////////////////////////////////////////////////////////////////////////////
-//
-// for Home Region
-//
-
-function  opensim_get_home_region($uuid, &$db=null)
-{
-	if (!isGUID($uuid)) return null;
-
-	if (!is_object($db)) $db = & opensim_new_db();
-
-	$region_name = '';
-	if ($db->exist_table('GridUser')) {
-		$db->query("SELECT regionName FROM GridUser,regions WHERE HomeRegionID=uuid AND UserID='$uuid'");
-		list($region_name) = $db->next_record();
-	}
-	else if ($db->exist_table('users')) {
-		$db->query("SELECT regionName FROM users,regions WHERE homeRegionID=regions.uuid AND users.UUID='$uuid'");
-		list($region_name) = $db->next_record();
-	}
-
-	return $region_name;
-}
-
-
-
-function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', $pos_z='0', &$db=null)
-{
-	if (!isGUID($uuid)) return false;
-	if (!isAlphabetNumericSpecial($hmregion)) return false;
-	if (!isNumeric($pos_x) or !isNumeric($pos_y) or !isNumeric($pos_z)) return false;
-
-	if (!is_object($db)) $db = & opensim_new_db();
-
-	$db->query("SELECT uuid,regionHandle FROM regions WHERE regionName='$hmregion'");
-	$errno = $db->Errno;
-	if ($errno==0) {
-		list($regionID, $regionHandle) = $db->next_record();
-
-		if ($db->exist_table('GridUser')) {
-			$homePosition = "<$pos_x,$pos_y,$pos_z>";
-			$db->query("UPDATE GridUser SET HomeRegionID='$regionID',HomePosition='$homePosition' WHERE UserID='$uuid'");
-			$errno = $db->Errno;
-		}
-
-		if ($db->exist_table('users') and $errno==0) {
-			$homePosition = "homeLocationX='$pos_x',homeLocationY='$pos_y',homeLocationZ='$pos_z' ";
-			$db->query("UPDATE users SET homeRegion='$regionHandle',homeRegionID='$regionID',$homePosition WHERE UUID='$uuid'");
-			if ($db->Errno!=0) {
-				if (!$db->exist_table('auth')) $errno = 99;
-			}
-		}
-	}
-
-	if ($errno!=0) return false;
-	return true;
-}
-
-
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1419,35 +1607,6 @@ function  opensim_recreate_presence(&$db=null)
 
 
 
-/////////////////////////////////////////////////////////////////////////////////////
-//
-// for Assets
-//
-
-function  opensim_get_asset_data($uuid, &$db=null)
-{
-	$asset = array();
-
-	if (!isGUID($uuid)) return $asset;
-	if (!is_object($db)) $db = & opensim_new_db();
-
-	$db->query("SELECT name,description,assetType,data,asset_flags,CreatorID FROM assets WHERE id='$uuid'");
-	list($name, $desc, $type, $data, $flag, $creator) = $db->next_record();
-
-	$asset['UUID'] 	  = $uuid;
-	$asset['name'] 	  = $name;
-	$asset['desc'] 	  = $desc;
-	$asset['type'] 	  = $type;
-	$asset['data'] 	  = $data;
-	$asset['flag'] 	  = $flag;
-	$asset['creator'] = $creator;
-
-	return $asset;
-}
-
-
-
-
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1506,149 +1665,92 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 
 
 
-
 /////////////////////////////////////////////////////////////////////////////////////
 //
-// for Asset
-//
+// for Currency
 
-function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
+function opensim_set_currency_transaction($sourceId, $destId, $amount, $flags, $type, $description, $userip, &$db=null)
 {
-	if (!isGuid($uuid)) return false;
-	if ($prog==null or $prog=='') return false;
+	if (!isNumeric($amount)) return;
+	if (!isGUID($sourceId))  $sourceId = '00000000-0000-0000-0000-000000000000';
+	if (!isGUID($destId)) 	 $destId   = '00000000-0000-0000-0000-000000000000';
 
-	if ($cachedir=='') $cachedir = '/tmp';
-	$cachefile = $cachedir.'/'.$uuid;
+	if (!is_object($db)) $db = & opensim_new_db();
 
+	$handle   = 0;
+	$secure   = '00000000-0000-0000-0000-000000000000';
+	$client	  = $sourceId;
+	$UUID     = make_random_guid();
+	$sourceID = $sourceId.'@'.$userip;
+	$destID   = $destId.'@'.$userip;
+	if ($client=='00000000-0000-0000-0000-000000000000') $client = $destId;
 
-	// PHP module
-	$imagick = null;
-	if ($prog=='imagick') {
-		if (class_exists('Imagick')) {
-			$imagick = new Imagick();
-		}
-		else {
-			echo '<h4>PHP module Imagick is not installed!!</h4>';
-			return false;
-		}
+	$avt = opensim_get_avatar_session($client);
+	if ($avt!=null) {
+		$region = $avt['regionID'];
+		$secure = $avt['secureID'];
+
+		$rgn = opensim_get_region_info($region);
+		if ($rgn!=null) $handle = $rgn["regionHandle"];
 	}
 
-	// Linux Command
-	else {
-		if (file_exists('/usr/local/bin/'.$prog)) 	   $path = '/usr/local/bin/';
-		else if (file_exists('/usr/bin/'.$prog)) 	   $path = '/usr/bin/';
-		else if (file_exists('/usr/X11R6/bin/'.$prog)) $path = '/usr/X11R6/bin/';
-		else if (file_exists('/bin/'. $prog)) 		   $path = '/bin/';
-		else {
-			echo '<h4>program '.$prog.' is not found!!</h4>';
-			return false;
-		}
-
-		if ($prog=='jasper') {		// JasPer does not support Targa image format.
-			$use_tga = false;
-		}
-	}
-
-	
-	// Check j2k to TGA command
-	if ($use_tga) {
-		$tga_com = get_j2k_to_tga_command();
-		if ($tga_com=='') $use_tga = false;
-	}
-
-
-	// get and save image
-	if (! ((!$use_tga and file_exists($cachefile)) or ($use_tga and file_exists($cachefile.'.tga')))) {
-		$imgdata = '';
-
-		// from MySQL Server
-		$asset = opensim_get_asset_data($uuid);
-		if ($asset) {
-			if ($asset['type']==0) {
-				$imgdata = $asset['data'];
-			}
-		}
-		else {
-			echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).')</h4>';
-			return false;
-		}
-
-/*		// from Asset Server
-		//$asset_url = $ASSET_SERVER_URL.'/assets/'.$uuid;
-		$asset_url = 'http://202.26.159.200:8003/assets/'.$uuid;
-		$fp = fopen($asset_url, "rb");
-		stream_set_timeout($fp, 5);
-		$content = stream_get_contents($fp);
-		fclose($fp);
-		if (!$content) {
-			echo '<h4>asset uuid is not found!! ('.htmlspecialchars($uuid).')</h4>';
-			return false;
-		}
-
-		$xml = new SimpleXMLElement($content);
-		$imgdata = base64_decode($xml->Data);
-*/
-
-		// Save Image Data
-		$fp = fopen($cachefile, 'wb');
-		fwrite($fp, $imgdata);
-		fclose($fp);
-
-		if ($use_tga) {
-			if (!j2k_to_tga($cachefile)) $use_tga = false;
-		}
-	}
-
-	if ($use_tga && file_exists($cachefile.'.tga')) $cachefile .= '.tga';
-
-
-	//
-	// program for image processing of jpeg2000
-	//
-
-	// Imagick of PHP
-	if ($prog=='imagick' and $imagick!=null) {
-		$ret = $imagick->readImage($cachefile);
-		if (!$ret) {
-			echo '<h4>Imagick could not read '.$cachefile.'!!</h4>';
-			return false;
-		}
-		$imagick->setImageFormat('JPEG'); 
-		if ($xsize>0 and $ysize>0) {
-			$imagick->scaleImage($xsize, $ysize);
-		}
-
-		header("Content-Type: image/jpeg"); 
-		echo $imagick;
-	}
-
-	// ImageMagic (convert)
-	else if ($prog=='convert') {
-		$imgsize = '';
-		if ($xsize>0 and $ysize>0) $imgsize = ' -resize '.$xsize.'x'.$ysize.'!';
-		$prog = $path.'convert '. $cachefile.$imgsize.' jpeg:-';
-
-		header("Content-Type: image/jpeg"); 
-		passthru($prog);
-	}
-
-	// Jasper
-	else if ($prog=='jasper') {
-		$conv = '';
-		if ($xsize>0 and $ysize>0) {
-			$conv = get_image_size_convert_command($xsize, $ysize);
-			if ($conv!='') $conv = ' | '.$conv;
-		}
-		$prog = $path.'jasper -f '.$cachefile.' -T jpg'.$conv;
-
-		header("Content-Type: image/jpeg"); 
-		passthru($prog);
-	}
-
-	return true;
+	$sql = "INSERT INTO ".CURRENCY_TRANSACTION_TBL." (UUID,sender,receiver,amount,objectUUID,".
+													"regionHandle,type,time,secure,status,description) ".
+			"VALUES ('".
+				$UUID."','".
+				$sourceID."','".
+				$destID."','".
+				$amount."','".               
+				"00000000-0000-0000-0000-000000000000','".
+				$handle."','".
+				$db->escape($type)."','".
+				time()."','".
+				$secure."','".
+				$db->escape($flags)."','".  
+				$db->escape($description)."')";
+	$db->query($sql);
 }
- 
 
+
+
+function opensim_set_currency_balance($uuid, $userip, $amount, &$db=null)
+{
+	if (!isGUID($uuid) or !isNumeric($amount)) return;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$user = $db->escape($uuid.'@'.$userip);
+
+	$db->lock_table(CURRENCY_MONEY_TBL);
+
+	$db->query("SELECT balance FROM ".CURRENCY_MONEY_TBL." WHERE user='".$user."'");
+	if ($db->Errno==0) {
+		list($cash) = $db->next_record();
+		$balance = (integer)$cash + (integer)$amount;
+
+		$db->query("UPDATE ".CURRENCY_MONEY_TBL." SET balance='".$balance."' WHERE user='".$user."'");
+		if ($db->Errno==0) $db->next_record();
+	}
+
+	$db->unlock_table();
+}
+
+
+
+function opensim_get_currency_balance($uuid, $userip, &$db=null)
+{
+	if (!isGUID($uuid)) return;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$user = $db->escape($uuid.'@'.$userip);
+	$db->query("SELECT balance FROM ".CURRENCY_MONEY_TBL." WHERE user='".$user."'");
+
+	$cash = 0;
+	if ($db->Errno==0) list($cash) = $db->next_record();
+
+	return (integer)$cash;
+}
 
 
 
@@ -1657,6 +1759,57 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 //
 // Tools
 //
+
+function  opensim_get_servers_ip(&$db=null)
+{
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$ips = array();
+
+	$db->query("SELECT DISTINCT serverIP FROM regions");
+	if ($db->Errno==0) {
+		$count = 0;
+		while (list($serverIP) = $db->next_record()) {
+			$ips[$count] = $serverIP;
+			$count++;
+		}		
+	}
+
+	return $ips;
+}
+
+
+
+function  opensim_get_server_info($userid, &$db=null)
+{
+	$ret = array();
+
+	if (!isGUID($userid)) return $ret;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	if ($db->exist_table("GridUser")) {
+		$sql = "SELECT serverIP,serverHttpPort,serverURI,regionSecret FROM GridUser".
+					" INNER JOIN regions ON regions.uuid=GridUser.LastRegionID WHERE GridUser.UserID='".$userid."'";
+	}
+	else {
+		$sql = "SELECT serverIP,serverHttpPort,serverURI,regionSecret FROM agents".
+					" INNRT JOIN regions ON regions.uuid=agents.currentRegion WHERE agents.UUID='".$userid."'";
+	}
+	$db->query($sql);
+
+	if ($db->Errno==0) {
+		list($serverip, $httpport, $serveruri, $secret) = $db->next_record();
+		$ret["serverIP"] 	   = $serverip;
+		$ret["serverHttpPort"] = $httpport;
+		$ret["serverURI"] 	   = $serveruri;
+		$ret["regionSecret"]   = $secret;
+	}
+	
+	return $ret;
+}
+
+
 
 function  opensim_is_access_from_region_server()
 {
@@ -1679,6 +1832,67 @@ function  opensim_is_access_from_region_server()
 }
 
 
+
+//
+function  opensim_check_secure_session($uuid, $regoinid, $secure, &$db=null)
+{
+	if (!isGUID($uuid) or !isGUID($secure)) return false;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	if ($db->exist_table("Presence")) {
+		$sql = "SELECT UserID FROM Presence WHERE UserID='".$uuid."' AND SecureSessionID='".$secure."'";
+		if (isGUID($regionid)) $sql = $sql." AND RegionID='".$regionid."'";
+	}
+	else {    
+		$sql = "SELECT UUID FROM agents WHERE UUID='".$uuid."' AND secureSessionID='".$secure."' AND agentOnline='1'";
+		if (isGUID($regionid)) $sql = $sql." AND  currentRegion='".$regionid."'";
+	}
+	$db->query($sql);
+	if ($db->Errno!=0) return false;
+
+	list($UUID) = $db->next_record();
+	if ($UUID!=$uuid) return false;
+	return true;
+}
+
+
+
+//
+function  opensim_check_secret_region($uuid, $secret, &$db=null)
+{
+	if (!isGUID($uuid)) return false;
+
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	$sql = "SELECT UUID FROM regions WHERE UUID='".$uuid."' AND regionSecret='".$db->escape($secret)."'";
+	$db->query($sql);
+	if ($db->Errno!=0) return false;
+
+	list($UUID) = $db->next_record();
+	if ($UUID!=$uuid) return false;
+	return true;
+}
+
+
+
+function  opensim_clear_login_table(&$db=null)
+{
+	if (!is_object($db)) $db = & opensim_new_db();
+
+	if ($db->exist_table('Presence')) {
+		$db->query("DELETE FROM Presence");
+	}
+	else if ($db->exist_table('agents')) {
+		//$db->query("DELETE FROM agents");
+		return true;
+	}
+	else {
+		return false;
+	}
+
+	return true;
+}
 
 
 ?>
