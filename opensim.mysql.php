@@ -325,7 +325,7 @@ function  opensim_get_avatar_session($uuid, &$db=null)
 	$avssn['regionID']  = $RegionID;
 	$avssn['sessionID'] = $SessionID;
 	$avssn['secureID']  = $SecureSessionID;
-	$avssn['lastlogin'] = $LastLogin;
+	//$avssn['lastlogin'] = $LastLogin;
 	
 	return $avssn;
 }
@@ -907,8 +907,11 @@ function  opensim_set_current_region($uuid, $regionid, &$db=null)
 	if ($db->exist_table("Presence")) {
 		$sql = "UPDATE Presence SET RegionID='".$regionid."' WHERE UserID='". $uuid."'";
 	}
-	else {
+	else if ($db->exist_table("agents")) {
 		$sql = "UPDATE agents SET currentRegion='".$regionid."' WHERE UUID='".$uuid."'";
+	}
+	else {
+		return false;
 	}
 
 	$db->query($sql);
@@ -1842,10 +1845,14 @@ function  opensim_check_secure_session($uuid, $regionid, $secure, &$db=null)
 		$sql = "SELECT UserID FROM Presence WHERE UserID='".$uuid."' AND SecureSessionID='".$secure."'";
 		if (isGUID($regionid)) $sql = $sql." AND RegionID='".$regionid."'";
 	}
-	else {    
+	else if ($db->exist_table("agents")) {
 		$sql = "SELECT UUID FROM agents WHERE UUID='".$uuid."' AND secureSessionID='".$secure."' AND agentOnline='1'";
 		if (isGUID($regionid)) $sql = $sql." AND  currentRegion='".$regionid."'";
 	}
+	else { 
+		return false;
+	}
+
 	$db->query($sql);
 	if ($db->Errno!=0) return false;
 
