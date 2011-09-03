@@ -50,8 +50,16 @@ function env_set_money_transaction($sourceId, $destId, $amount, $type, $falgs, $
 	$avt = opensim_get_avatar_session($client);
 	if ($avt!=null) $region = $avt['regionID'];
 
-	$db = new DB(CURRENCY_DB_HOST, CURRENCY_DB_NAME, CURRENCY_DB_USER, CURRENCY_DB_PASS);
+	$db = null;
+	if (defined('CURRENCY_DB_HOST')) {
+		$db = new DB(CURRENCY_DB_HOST, CURRENCY_DB_NAME, CURRENCY_DB_USER, CURRENCY_DB_PASS);
+	}
+	else {
+		$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS);
+	}
+	if ($db==null) return;
    
+
 	$sql = "INSERT INTO ".CURRENCY_TRANSACTION_TBL." (sourceId,destId,amount,flags,aggregatePermInventory,".
 						"aggregatePermNextOwner,description,transactionType,timeOccurred,RegionGenerated,ipGenerated) ".
 			"VALUES ('".
@@ -79,7 +87,15 @@ function env_get_money_balance($uuid)
 	$scash = 0;
 	$dcash = 0;
 	
-	$db  = new DB(CURRENCY_DB_HOST, CURRENCY_DB_NAME, CURRENCY_DB_USER, CURRENCY_DB_PASS);
+	$db = null;
+	if (defined('CURRENCY_DB_HOST')) {
+		$db = new DB(CURRENCY_DB_HOST, CURRENCY_DB_NAME, CURRENCY_DB_USER, CURRENCY_DB_PASS);
+	}
+	else {
+		$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS);
+	}
+	if ($db==null) return 0;
+
 
 	$db->query("SELECT SUM(amount) FROM ".CURRENCY_TRANSACTION_TBL." WHERE destId='".  $uuid."'");
 	if ($db->Errno==0) list($dcash) = $db->next_record();
