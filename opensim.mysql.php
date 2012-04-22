@@ -2030,7 +2030,7 @@ function  opensim_check_secure_session($uuid, $regionid, $secure, &$db=null)
 		if (isGUID($regionid)) $sql = $sql." AND RegionID='".$regionid."'";
 	}
 
-	else if ($OpenSimVersion==OPENSIM_V07) {
+	else if ($OpenSimVersion==OPENSIM_V06) {
 		$sql = "SELECT UUID FROM agents WHERE UUID='".$uuid."' AND secureSessionID='".$secure."' AND agentOnline='1'";
 		if (isGUID($regionid)) $sql = $sql." AND currentRegion='".$regionid."'";
 	}
