@@ -1964,16 +1964,20 @@ function  opensim_get_server_info($userid, &$db=null)
 	}
 
 	else if ($OpenSimVersion==AURORASIM) {
-		$sql = "SELECT RegionInfo FROM userinfo,simulator ";
-		$sql.= "WHERE UserID='".$userid."' AND CurrentRegionID=simulator.RegionID";
+
+		$sql = "SELECT gridregions.Info FROM userinfo,gridregions ";
+		$sql.= "WHERE UserID='".$userid."' AND userinfo.CurrentRegionID=gridregions.RegionUUID";
+
+		//$sql = "SELECT RegionInfo FROM userinfo,simulator ";
+		//$sql.= "WHERE UserID='".$userid."' AND CurrentRegionID=simulator.RegionID";
 
 		$db->query($sql);
 		if ($db->Errno==0) {
 			list($regioninfo) = $db->next_record();
 			$info = split_key_value($regioninfo);		// from tools.func.php
-			$serverip  = gethostbyname($info["external_host_name"]);
-			$httpport  = $info["http_port"];
-			$serveruri = $info["server_uri"];
+			$serverip  = gethostbyname($info["serverIP"]);
+			$httpport  = $info["serverHttpPort"];
+			$serveruri = $info["serverURI"];
 			$secret    = null;
 		}
 	}
