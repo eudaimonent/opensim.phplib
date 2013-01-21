@@ -60,8 +60,9 @@ function env_set_money_transaction($sourceId, $destId, $amount, $type, $falgs, $
 	if ($db==null) return;
    
 
-	$sql = "INSERT INTO ".CURRENCY_TRANSACTION_TBL." (sourceId,destId,amount,flags,aggregatePermInventory,".
-						"aggregatePermNextOwner,description,transactionType,timeOccurred,RegionGenerated,ipGenerated) ".
+	$sql = "INSERT INTO ".CURRENCY_TRANSACTION_TBL." (sourceId,destId,amount,flags,".
+                        "aggregatePermInventory,aggregatePermNextOwner,description,".
+                        "transactionType,timeOccurred,RegionGenerated,ipGenerated) ".
 			"VALUES ('".
 				$sourceId."','".
 				$destId."','".
