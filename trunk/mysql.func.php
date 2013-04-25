@@ -232,9 +232,12 @@ class DB
 
 
 	
+	//
+	// InnoDB では Update_time は NULL になる!
+	// 
 	function get_update_time($table, $unixtime=true)
 	{
-		$update = "";
+		$update = '';
 		if ($unixtime) $update = 0;
 
 		$this->query("SHOW TABLE STATUS WHERE name='$table'");
@@ -243,7 +246,7 @@ class DB
 			$table_status = $this->next_record();
 			$update = $table_status['Update_time'];
 			if ($unixtime) {
-				if ($update!="") $update = strtotime($update);
+				if ($update!='') $update = strtotime($update);
 				else $update = 0;
 			}
 		}
