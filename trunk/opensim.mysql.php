@@ -155,6 +155,9 @@ function  opensim_get_db_version(&$db=null)
 
 
 
+//
+// InnoDB の場合は常に 0 を返す
+//
 function  opensim_users_update_time(&$db=null)
 {
 	global $OpenSimVersion;
@@ -172,15 +175,53 @@ function  opensim_users_update_time(&$db=null)
 
 
 
+//
+// InnoDB では常に 0 を返す
+//
 function  opensim_get_update_time($table, &$db=null)
 {
-	if ($table=="") return 0;
+	if ($table=='') return 0;
 
 	if (!is_object($db)) $db = opensim_new_db();
 	$utime = $db->get_update_time($table);
 
 	return $utime;
 }
+
+
+
+function  opensim_users_count_records(&$db=null)
+{
+	global $OpenSimVersion;
+
+	if (!is_object($db)) $db = opensim_new_db();
+	if ($OpenSimVersion==null) opensim_get_db_version($db);
+
+	if ($db->exist_table('GridUser')) 	$table = 'GridUser';
+	else if ($db->exist_table('users')) $table = 'users';
+	else return 0;
+
+	$count = opensim_count_records($table, $db);
+	return $count;
+}
+
+
+
+
+function  opensim_count_records($table, &$db=null)
+{
+	if ($table=='') return 0;
+
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$count = 0;
+	$db->query('SELECT COUNT(*) FROM '.$table);
+	if ($db->Errno==0) {
+		list($count) = $db->next_record();
+	}
+	return $count;
+}
+
 
 
 
