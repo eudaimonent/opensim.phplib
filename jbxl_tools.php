@@ -10,9 +10,11 @@ $jbxl_tools_ver = 2013092100;
 
 
 //
-if (defined('JBXL_TOOLS_VER')) {
-	if (JBXL_TOOLS_VER < $jbxl_tools_ver) {
-		print_error('JBXL_TOOLS: old version is used. '.JBXL_TOOLS_VER.' < '.$jbxl_tools_ver);
+if (defined('JBXL_TOOLS_VER') or defined('_JBXL_TOOLS')) {
+	if (defined('JBXL_TOOLS_VER')) {
+		if (JBXL_TOOLS_VER < $jbxl_tools_ver) {
+			print_error('JBXL_TOOLS: old version is used. '.JBXL_TOOLS_VER.' < '.$jbxl_tools_ver);
+		}
 	}
 }
 else {
