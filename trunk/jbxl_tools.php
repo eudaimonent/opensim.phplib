@@ -2,11 +2,24 @@
 //
 // by Fumi.Iseki  2007/03/24
 //                2012/04/12
+//                2013/04/20
+//                2013/09/21
 //
 
-if (!defined('_JBXL_TOOLS')) {
+$jbxl_tools_ver = 2013092100;
 
-define('_JBXL_TOOLS', 'jbxl_tools_v1.0');
+
+//
+if (defined('JBXL_TOOLS_VER')) {
+	if (JBXL_TOOLS_VER < $jbxl_tools_ver) {
+		print_error('JBXL_TOOLS: old version is used. '.JBXL_TOOLS_VER.' < '.$jbxl_tools_ver);
+	}
+}
+else {
+
+define('JBXL_TOOLS_VER', $jbxl_tools_ver);
+
+
 
 
 /****************************************************************************************
@@ -41,20 +54,31 @@ function  jbxl_to_subnetformats($strips)
 	if (empty($ipfmts)) return $return;
 
 	unset($tempips);
+	// omission of subnetmask
 	foreach($ipfmts as $ipfmt) {
-		$tempips = explode("/", $ipfmt);
+		$tempips = explode('/', $ipfmt);
 		if (empty($tempips[0])) continue;
-		if (empty($tempips[1])) $tempips[1] = "255.255.255.255";
+		if (empty($tempips[1])) {
+			$ips = explode('.', $tempips[0]);
+			$tempips[1] = '';
+			for ($i=0; $i<4; $i++) {
+				if (empty($ips[$i])) $tempips[1].= '0';
+				else                 $tempips[1].= '255';
+				if ($i!=3) $tempips[1].= '.';
+			}
+			unset($ips);
+		}
 		$ipaddr_subnets[] = $tempips;
 	}
 	if (empty($ipaddr_subnets)) return $return;
 
+	//
 	$index = 0;
 	foreach($ipaddr_subnets as $ipaddr_subnet) {
-		$ips = explode(".", $ipaddr_subnet[0]);
-		$sub = explode(".", $ipaddr_subnet[1]);
+		$ips = explode('.', $ipaddr_subnet[0]);
+		$sub = explode('.', $ipaddr_subnet[1]);
 
-		if (count($sub)==1) { 			// CIDER -> SubnetMask
+		if (count($sub)==1 and $sub[0]<=32) { 	// CIDER -> SubnetMask
 			$cider = $sub[0];
 			$nbyte = (int)($cider/8);
 			$nbit  = $cider - $nbyte*8;
@@ -89,12 +113,12 @@ function  jbxl_to_subnetformats($strips)
 
 //
 // $ip が $ipaddr_subnetsの中に含まれるか検査する．
-// $ipaddr_subnets は jbxl_to_subnetformats()が出力したものを使用する．
+// $ipaddr_subnets は jbxl_to_subnetformats()が出力したものを使用すること．
 // $ip の内容の形式はチェックしない．これは呼び出し側の責任．
 //
-function  jbxl_match_ipaddr($ip, $ipaddr_subnets)
+function  jbxl_match_ipaddr($ip, array $ipaddr_subnets)
 {
-	$ipa = explode(".", $ip);
+	$ipa = explode('.', $ip);
 	if (empty($ipa)) return false;
 
 	for ($i=1; $i<4; $i++) {
@@ -171,5 +195,5 @@ function  jbxl_get_ipresolv_url($ip, $region='APNIC')
 
 
 
-} 		// !defined('_JBXL_TOOLS')
+} 		// !defined('JBXL_TOOLS_VER')
 ?>
