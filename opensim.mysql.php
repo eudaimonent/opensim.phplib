@@ -61,6 +61,8 @@
  function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
 
 // for Inventory
+ function  opensim_create_default_wear($UUID, $inv, $db=null)
+ function  opensim_create_default_inventory_items($UUID, $db=null)
  function  opensim_create_inventory_folders($uuid, &$db=null)
 
 // for Password
@@ -101,6 +103,17 @@ define('AURORASIM',		'aurora-sim');
 
 $OpenSimVersion = null;
 
+
+//
+define('DEFAULT_ASSET_SHAPE',	'66c41e39-38f9-f75a-024e-585989bfab73');
+define('DEFAULT_ASSET_SKIN',	'77c41e39-38f9-f75a-024e-585989bbabbb');
+define('DEFAULT_ASSET_HAIR',	'd342e6c0-b9d2-11dc-95ff-0800200c9a66');
+define('DEFAULT_ASSET_EYES',	'4bb6fa4d-1cd2-498a-a84c-95c1a0e745a7');
+define('DEFAULT_ASSET_SHIRT',	'00000000-38f9-1111-024e-222222111110');
+define('DEFAULT_ASSET_PANTS',	'00000000-38f9-1111-024e-222222111120');
+
+define('DEFAULT_AVATAR_HEIGHT', '1.690999');
+define('DEFAULT_AVATAR_PARAMS', '33,61,85,23,58,127,63,85,63,42,0,85,63,36,85,95,153,63,34,0,63,109,88,132,63,136,81,85,103,136,127,0,150,150,150,127,0,0,0,0,0,127,0,0,255,127,114,127,99,63,127,140,127,127,0,0,0,191,0,104,0,0,0,0,0,0,0,0,0,145,216,133,0,127,0,127,170,0,0,127,127,109,85,127,127,63,85,42,150,150,150,150,150,150,150,25,150,150,150,0,127,0,0,144,85,127,132,127,85,0,127,127,127,127,127,127,59,127,85,127,127,106,47,79,127,127,204,2,141,66,0,0,127,127,0,0,0,0,127,0,159,0,0,178,127,36,85,131,127,127,127,153,95,0,140,75,27,127,127,0,150,150,198,0,0,63,30,127,165,209,198,127,127,153,204,51,51,255,255,255,204,0,255,150,150,150,150,150,150,150,150,150,150,0,150,150,150,150,150,0,127,127,150,150,150,150,150,150,150,150,0,0,150,51,132,150,150,150');
 
 
 
@@ -743,7 +756,11 @@ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregi
 				$errno = opensim_create_inventory_folders($UUID, $db);
 			}
 
-			if ($errno!=0) {
+			if ($errno==0) {
+				$inv = opensim_create_default_inventory_items($UUID, $db);
+ 				opensim_create_default_wear($UUID, $inv, $db);
+			}
+			else {
 				$db->query("DELETE FROM UserAccounts WHERE PrincipalID='$UUID'");
 				$db->query("DELETE FROM auth		 WHERE UUID='$UUID'");
 				$db->query("DELETE FROM inventoryfolders WHERE agentID='$UUID'");
@@ -794,6 +811,7 @@ function  opensim_delete_avatar($uuid, &$db=null)
 		$db->query("DELETE FROM tokens	   WHERE UUID='$uuid'");
 		if ($db->exist_table('Presence')) $db->query("DELETE FROM Presence WHERE UserID='$uuid'");
 		if ($db->exist_table('GridUser')) $db->query("DELETE FROM GridUser WHERE UserID='$uuid'");
+		if ($db->exist_table('Avatars'))  $db->query("DELETE FROM Avatars  WHERE PrincipalID='$uuid'");
 	}
 
 	if ($db->exist_table('users')) {
@@ -1429,6 +1447,107 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 //
 // for Inventory
 //
+
+function  opensim_create_default_wear($uuid, $inv, &$db=null)
+{
+	if (!$db->exist_table('Avatars')) return false;
+
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','AvatarHeight','".DEFAULT_AVATAR_HEIGHT."')");
+	$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','AvatarType','1')");
+	$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Serial','0')");
+	$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','VisualParams','".DEFAULT_AVATAR_PARAMS."')");
+
+	if (is_array($inv)) {
+		if (isset($inv['Shape'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 0:0','".$inv['Shape'].':'.DEFAULT_ASSET_SHAPE."')");
+		if (isset($inv['Skin']))
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 1:0','".$inv['Skin']. ':'.DEFAULT_ASSET_SKIN."')");
+		if (isset($inv['Hair'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 2:0','".$inv['Hair']. ':'.DEFAULT_ASSET_HAIR."')");
+		if (isset($inv['Eyes'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 3:0','".$inv['Eyes']. ':'.DEFAULT_ASSET_EYES."')");
+		if (isset($inv['Shirt'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 4:0','".$inv['Shirt'].':'.DEFAULT_ASSET_SHIRT."')");
+		if (isset($inv['Pants'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 5:0','".$inv['Pants'].':'.DEFAULT_ASSET_PANTS."')");
+	}
+
+	return true;
+}
+
+
+
+
+function  opensim_create_default_inventory_items($uuid, &$db=null)
+{
+	if (!isGUID($uuid)) return false;
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$db->query("SELECT folderID FROM inventoryfolders WHERE agentID='$uuid' AND type='13'");	// Body Parts Folder
+	list($body_folder) = $db->next_record();
+	$db->query("SELECT folderID FROM inventoryfolders WHERE agentID='$uuid' AND type='5'");		// Clothing Folder
+	list($cloth_folder) = $db->next_record();
+	if (!$body_folder or !$cloth_folder) return false;
+
+	$default_inv = array();
+
+	$create_time = time();
+	$insert_columns = 'assetID,assetType,inventoryName,inventoryDescription,inventoryNextPermissions,inventoryCurrentPermissions,invType,'.
+					  'creatorID,inventoryBasePermissions,inventoryEveryOnePermissions,creationDate,flags,inventoryID,avatarID,parentFolderID,'.
+					  'inventoryGroupPermissions';
+	$insert_common  = "'','581632','581632','18','$uuid','581632','581632','$create_time'";
+
+	$invID = make_random_guid();
+	$db->query("INSERT INTO inventoryitems ($insert_columns) ".
+					"VALUES ('".DEFAULT_ASSET_SHAPE."','13','Default Shape',$insert_common,'0','$invID','$uuid','$body_folder', '581632')");
+	$errno = $db->Errno;
+
+	if ($errno==0) {
+		$default_inv['Shape'] = $invID;
+		$invID = make_random_guid();
+		$db->query("INSERT INTO inventoryitems ($insert_columns) ".
+					"VALUES ('".DEFAULT_ASSET_SKIN. "','13','Default Skin', $insert_common,'1','$invID','$uuid','$body_folder', '581632')");
+		$errno = $db->Errno;
+	}
+	if ($errno==0) {
+		$default_inv['Skin'] = $invID;
+		$invID = make_random_guid();
+		$db->query("INSERT INTO inventoryitems ($insert_columns) ".
+					"VALUES ('".DEFAULT_ASSET_HAIR. "','13','Default Hair', $insert_common,'2','$invID','$uuid','$body_folder', '581632')");
+		$errno = $db->Errno;
+	}
+	if ($errno==0) {
+		$default_inv['Hair'] = $invID;
+		$invID = make_random_guid();
+		$db->query("INSERT INTO inventoryitems ($insert_columns) ".
+					"VALUES ('".DEFAULT_ASSET_EYES. "','13','Default Eyes', $insert_common,'3','$invID','$uuid','$body_folder', '581632')");
+		$errno = $db->Errno;
+	}
+	if ($errno==0) {
+		$default_inv['Eyes'] = $invID;
+		$invID = make_random_guid();
+		$db->query("INSERT INTO inventoryitems ($insert_columns) ".
+					"VALUES ('".DEFAULT_ASSET_SHIRT. "','5','Default Shirt',$insert_common,'4','$invID','$uuid','$cloth_folder','581632')");
+		$errno = $db->Errno;
+	}
+	if ($errno==0) {
+		$default_inv['Shirt'] = $invID;
+		$invID = make_random_guid();
+		$db->query("INSERT INTO inventoryitems ($insert_columns) ".
+					"VALUES ('".DEFAULT_ASSET_PANTS. "','5','Default Pants',$insert_common,'5','$invID','$uuid','$cloth_folder','581632')");
+		$errno = $db->Errno;
+	}
+	if ($errno==0) {
+		$default_inv['Pants'] = $invID;
+	}
+		
+	return $default_inv;
+}
+
+
+
 
 function  opensim_create_inventory_folders($uuid, &$db=null)
 {
