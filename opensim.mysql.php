@@ -65,6 +65,10 @@
  function  opensim_create_default_inventory_items($uuid, $db=null)
  function  opensim_create_default_inventory_folders($uuid, &$db=null)
 
+ function  opensim_create_avatar_wear_dup($touuid, $fromid, $invent, &$db=null)
+ function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, $db=null)
+ function  opensim_create_inventory_folders_dup($touuid, $fromid, $db=null)
+
 // for Password
  function  opensim_get_password($uuid, $tbl='', &$db=null)
  function  opensim_set_password($uuid, $passwdhash, $passwdsalt='', $tbl='', &$db=null)
@@ -1478,39 +1482,14 @@ function  opensim_create_avatar_wear_dup($touuid, $fromid, $invent, &$db=null)
 			$db2->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$touuid','$Name','$Value')");
 		}
 	}
-
-/*
-	$avatars = array();
-    if ($errno==0) {
-		while (list($PrincipalID,$Name,$Value) = $db->next_record()) {
-			$avatars[$Name] = new stdClass();
-			$avatars[$Name]->PrincipalID = $touuid;
-			$avatars[$Name]->Name  = $Name;
-
-			//if (!strncmp($Name, "Wearable ", 9)) {
-			if (!strncasecmp($Name, "Wearable ", 9)) {
-				$id = explode(':', $Value);
-				if (isGUID($id[0]) and isGUID($id[1])) {
-					if (isset($invent[$id[0]])) $Value = $invent[$id[0]]->inventoryID.':'.$id[1];
-				}
-			}
-			//
-			$avatars[$Name]->Value = $Value;
-		}
-
-		foreach ($avatars as $avt) {
-			$uuid  = $avt->PrincipalID;
-			$Name  = addslashes($avt->Name);
-			$Value = addslashes($avt->Value);
-			//
-			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','$Name','$Value')");
-		}
-	}
-*/
 }
 
 
 
+
+//
+// コピーしたアイテムのIDのコピー元とコピー先の対応を格納した配列を返す．
+//
 function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, &$db=null)
 {
 	if (!is_array($folder)) return false;
@@ -1529,7 +1508,6 @@ function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, &$db=nul
 			$inventoryName = addslashes($inventoryName);
 			$inventoryDescription = addslashes($inventoryDescription);
 			$avatarID = $touuid;
-			//
 			$inventID = make_random_guid();
 			if (isset($folder[$parentFolderID])) $parent = $folder[$parentFolderID]->folderID;
 			else 								 $parent = '00000000-0000-0000-0000-000000000000';
@@ -1543,65 +1521,6 @@ function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, &$db=nul
 		 							"'$invType','$creatorID','$inventoryBasePermissions','$inventoryEveryOnePermissions','$salePrice','$saleType','$creationDate',".
 		 							"'$groupID','$groupOwned','$flags','$inventID','$avatarID','$parent','$inventoryGroupPermissions')");
 		}
-/*
-	$invent = array();
-    if ($errno==0) {
-		while (list($assetID,$assetType,$inventoryName,$inventoryDescription,$inventoryNextPermissions,$inventoryCurrentPermissions,
-		 			$invType,$creatorID,$inventoryBasePermissions,$inventoryEveryOnePermissions,$salePrice,$saleType,$creationDate,
-		 			$groupID,$groupOwned,$flags,$inventoryID,$avatarID,$parentFolderID,$inventoryGroupPermissions) = $db->next_record()) {
-			$invent[$inventoryID] = new stdClass();
-			$invent[$inventoryID]->assetID = $assetID;
-			$invent[$inventoryID]->assetType = $assetType;
-			$invent[$inventoryID]->inventoryName = $inventoryName;
-			$invent[$inventoryID]->inventoryDescription = $inventoryDescription;
-			$invent[$inventoryID]->inventoryNextPermissions = $inventoryNextPermissions;
-			$invent[$inventoryID]->inventoryCurrentPermissions = $inventoryCurrentPermissions;
-			$invent[$inventoryID]->invType = $invType;
-			$invent[$inventoryID]->creatorID = $creatorID;
-			$invent[$inventoryID]->inventoryBasePermissions = $inventoryBasePermissions;
-			$invent[$inventoryID]->inventoryEveryOnePermissions = $inventoryEveryOnePermissions;
-			$invent[$inventoryID]->salePrice = $salePrice;
-			$invent[$inventoryID]->saleType = $saleType;
-			$invent[$inventoryID]->creationDate = $creationDate;
-			$invent[$inventoryID]->groupID = $groupID;
-			$invent[$inventoryID]->groupOwned = $groupOwned;
-			$invent[$inventoryID]->inventoryID = make_random_guid();
-			$invent[$inventoryID]->avatarID = $touuid;
-			if (isset($folder[$parentFolderID])) $invent[$inventoryID]->parentFolderID = $folder[$parentFolderID]->folderID;
-			else 								 $invent[$inventoryID]->parentFolderID = '00000000-0000-0000-0000-000000000000';
-			$invent[$inventoryID]->inventoryGroupPermissions = $inventoryGroupPermissions;
-		}
-		
-		foreach($invent as $inv) {
-			$assetID = $inv->assetID;
-			$assetType = $inv->assetType;
-			$inventoryName = addslashes($inv->inventoryName);
-			$inventoryDescription = addslashes($inv->inventoryDescription);
-			$inventoryNextPermissions = $inv->inventoryNextPermissions;
-			$inventoryCurrentPermissions = $inv->inventoryCurrentPermissions;
-		 	$invType = $inv->invType;
-			$creatorID = $inv->creatorID;
-			$inventoryBasePermissions = $inv->inventoryBasePermissions;
-			$inventoryEveryOnePermissions = $inv->inventoryEveryOnePermissions;
-			$salePrice = $inv->salePrice;
-			$saleType = $inv->saleType;
-			$creationDate = $inv->creationDate;
-		 	$groupID = $inv->groupID;
-			$groupOwned = $inv->groupOwned;
-			$flags = $inv->flags;
-			$inventoryID = $inv->inventoryID;
-			$avatarID = $inv->avatarID;
-			$parentFolderID = $inv->parentFolderID;
-			$inventoryGroupPermissions = $inv->inventoryGroupPermissions;
-			//
-			$db->query('INSERT INTO inventoryitems (assetID,assetType,inventoryName,inventoryDescription,inventoryNextPermissions,'.
-									'inventoryCurrentPermissions,invType,creatorID,inventoryBasePermissions,inventoryEveryOnePermissions,salePrice,'.
-									'saleType,creationDate,groupID,groupOwned,flags,inventoryID,avatarID,parentFolderID,inventoryGroupPermissions) '.
-							"VALUES ('$assetID','$assetType','$inventoryName','$inventoryDescription','$inventoryNextPermissions','$inventoryCurrentPermissions',".
-		 							"'$invType','$creatorID','$inventoryBasePermissions','$inventoryEveryOnePermissions','$salePrice','$saleType','$creationDate',".
-		 							"'$groupID','$groupOwned','$flags','$inventoryID','$avatarID','$parentFolderID','$inventoryGroupPermissions')");
-		}
-*/
 	}
 
 	return $invent;
@@ -1610,7 +1529,9 @@ function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, &$db=nul
 
 
 
-
+//
+// 作成したフォルダーの情報を返す．キーはコピー元フォルダーのフォルダーID
+//
 function  opensim_create_inventory_folders_dup($touuid, $fromid, &$db=null)
 {
 	if (!is_object($db)) $db = opensim_new_db();
