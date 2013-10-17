@@ -1480,13 +1480,18 @@ function  opensim_create_avatar_wear_dup($touuid, $fromid, $invent, &$db=null)
 	if ($errno==0) {
 		$db2 = opensim_new_db();
 		while (list($PrincipalID,$Name,$Value) = $db->next_record()) {
-			//if (!strncmp($Name, "Wearable ", 9)) {
-			if (!strncasecmp($Name, "Wearable ", 9)) {
+			if (!strncasecmp($Name, 'Wearable ', 9)) {
 				$id = explode(':', $Value);
 				if (isGUID($id[0]) and isGUID($id[1])) {
 					if (isset($invent[$id[0]])) $Value = $invent[$id[0]].':'.$id[1];
 				}
 			}
+			else if (!strncasecmp($Name, '_ap_', 4)) {
+				if (isGUID($Value)) {
+					if (isset($invent[$Value])) $Value = $invent[$Value];
+				}
+			}
+
 			$Name  = addslashes($Name);
 			$Value = addslashes($Value);
 			//
@@ -1519,13 +1524,15 @@ function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, &$db=nul
 		 			$invType,$creatorID,$inventoryBasePermissions,$inventoryEveryOnePermissions,$salePrice,$saleType,$creationDate,
 		 			$groupID,$groupOwned,$flags,$inventoryID,$avatarID,$parentFolderID,$inventoryGroupPermissions) = $db->next_record()) {
 
+			if (isset($folder[$parentFolderID]) and $folder[$parentFolderID]->folderName=='Current Outfit') continue;
+
 			$inventoryName = addslashes($inventoryName);
 			$inventoryDescription = addslashes($inventoryDescription);
+
 			$avatarID = $touuid;
 			$inventID = make_random_guid();
 			if (isset($folder[$parentFolderID])) $parent = $folder[$parentFolderID]->folderID;
 			else 								 $parent = '00000000-0000-0000-0000-000000000000';
-			//
 			$invent[$inventoryID] = $inventID;
 			//
 			$db2->query('INSERT INTO inventoryitems (assetID,assetType,inventoryName,inventoryDescription,inventoryNextPermissions,'.
