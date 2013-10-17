@@ -61,7 +61,7 @@
  function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
 
 // for Inventory
- function  opensim_create_avatar_inventory($uuid, $orig_uuid, $db=null)
+ function  opensim_create_avatar_inventory($uuid, $base_uuid, $db=null)
  function  opensim_create_default_avatar_wear($uuid, $invent, $db=null)
  function  opensim_create_default_inventory_items($uuid, $db=null)
  function  opensim_create_default_inventory_folders($uuid, &$db=null)
@@ -1447,16 +1447,16 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 //
 
 
-function  opensim_create_avatar_inventory($uuid, $orig_uuid, &$db=null)
+function  opensim_create_avatar_inventory($uuid, $base_uuid, &$db=null)
 {
 	if (!is_object($db)) $db = opensim_new_db();
 
-	$name = opensim_get_avatar_name($orig_uuid, $db);
+	$name = opensim_get_avatar_name($base_uuid, $db);
 
 	if (isset($name['fullname'])) {
-		$folder = opensim_create_inventory_folders_dup($uuid, $orig_uuid, $db);
-		$invent = opensim_create_inventory_items_dup($uuid, $orig_uuid, $folder, $db);
-		opensim_create_avatar_wear_dup($uuid, $orig_uuid, $invent, $db);
+		$folder = opensim_create_inventory_folders_dup($uuid, $base_uuid, $db);
+		$invent = opensim_create_inventory_items_dup($uuid, $base_uuid, $folder, $db);
+		opensim_create_avatar_wear_dup($uuid, $base_uuid, $invent, $db);
 	}
 	else {
 		opensim_create_default_inventory_folders($uuid, $db);
