@@ -1551,7 +1551,7 @@ function  opensim_create_inventory_folders_dup($touuid, $fromid, &$db=null)
 	if (!is_object($db)) $db = opensim_new_db();
 
 	$folder = array();
-	if (!isGUID($formid)) return $folder;
+	if (!isGUID($fromid)) return $folder;
 
 	$db->query("SELECT * FROM inventoryfolders WHERE agentID='$fromid'");
 	$errno = $db->Errno;
