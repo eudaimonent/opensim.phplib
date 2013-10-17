@@ -1,10 +1,10 @@
 <?php
 /*********************************************************************************
- * opensim.mysql.php v1.0.0 for OpenSim 	by Fumi.Iseki  2010 5/13
+ * opensim.mysql.php v1.1.0 for OpenSim 	by Fumi.Iseki  2013 10/20
  *
- * 			Copyright (c) 2009,2010,2011   http://www.nsl.tuis.ac.jp/
+ * 			Copyright (c) 2009,2010,2011,2013   http://www.nsl.tuis.ac.jp/
  *
- *			supported versions of OpenSim are 0.6.7, 0.6.8, 0.6.9, 0.7 and 0.7.1Dev
+ *			supported versions of OpenSim are 0.6.7, 0.6.8, 0.6.9 and 0.7.x
  *			tools.func.php is needed
  *			mysql.func.php is needed
  *
@@ -61,9 +61,9 @@
  function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
 
 // for Inventory
- function  opensim_create_default_wear($UUID, $inv, $db=null)
- function  opensim_create_default_inventory_items($UUID, $db=null)
- function  opensim_create_inventory_folders($uuid, &$db=null)
+ function  opensim_create_default_avatar_wear($uuid, $invent, $db=null)
+ function  opensim_create_default_inventory_items($uuid, $db=null)
+ function  opensim_create_default_inventory_folders($uuid, &$db=null)
 
 // for Password
  function  opensim_get_password($uuid, $tbl='', &$db=null)
@@ -752,13 +752,17 @@ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregi
 								  "VALUES ('$UUID','$passwdhash','$passwdsalt','$nulluuid','UserAccount')");
 				$errno = $db->Errno;
 			}
+			//
 			if ($errno==0) {
-				$errno = opensim_create_inventory_folders($UUID, $db);
-			}
+				//opensim_create_default_inventory_folders($UUID, $db);
+				//$invent = opensim_create_default_inventory_items($UUID, $db);
+ 				//opensim_create_default_avatar_wear($UUID, $invent, $db);
 
-			if ($errno==0) {
-				$inv = opensim_create_default_inventory_items($UUID, $db);
- 				opensim_create_default_wear($UUID, $inv, $db);
+				//
+				$orig_avatar = '61dfee5c-2440-49f7-8668-a47cecb19d04';
+				$folder = opensim_create_inventory_folders_dup($UUID, $orig_avatar, $db);
+				$invent = opensim_create_inventory_items_dup($UUID, $orig_avatar, $folder, $db);
+				opensim_create_avatar_wear_dup($UUID, $orig_avatar, $invent, $db);
 			}
 			else {
 				$db->query("DELETE FROM UserAccounts WHERE PrincipalID='$UUID'");
@@ -1448,30 +1452,230 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 // for Inventory
 //
 
-function  opensim_create_default_wear($uuid, $inv, &$db=null)
+
+function  opensim_create_avatar_wear_dup($touuid, $fromid, $invent, &$db=null)
 {
+	if (!is_array($invent)) return false;
+	if (!is_object($db)) $db = opensim_new_db();
 	if (!$db->exist_table('Avatars')) return false;
 
+	$db->query("SELECT * FROM Avatars WHERE PrincipalID='$fromid'");
+    $errno = $db->Errno;
+
+    if ($errno==0) {
+		$db2 = opensim_new_db();
+		while (list($PrincipalID,$Name,$Value) = $db->next_record()) {
+			//if (!strncmp($Name, "Wearable ", 9)) {
+			if (!strncasecmp($Name, "Wearable ", 9)) {
+				$id = explode(':', $Value);
+				if (isGUID($id[0]) and isGUID($id[1])) {
+					if (isset($invent[$id[0]])) $Value = $invent[$id[0]].':'.$id[1];
+				}
+			}
+			$Name  = addslashes($Name);
+			$Value = addslashes($Value);
+			//
+			$db2->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$touuid','$Name','$Value')");
+		}
+	}
+
+/*
+	$avatars = array();
+    if ($errno==0) {
+		while (list($PrincipalID,$Name,$Value) = $db->next_record()) {
+			$avatars[$Name] = new stdClass();
+			$avatars[$Name]->PrincipalID = $touuid;
+			$avatars[$Name]->Name  = $Name;
+
+			//if (!strncmp($Name, "Wearable ", 9)) {
+			if (!strncasecmp($Name, "Wearable ", 9)) {
+				$id = explode(':', $Value);
+				if (isGUID($id[0]) and isGUID($id[1])) {
+					if (isset($invent[$id[0]])) $Value = $invent[$id[0]]->inventoryID.':'.$id[1];
+				}
+			}
+			//
+			$avatars[$Name]->Value = $Value;
+		}
+
+		foreach ($avatars as $avt) {
+			$uuid  = $avt->PrincipalID;
+			$Name  = addslashes($avt->Name);
+			$Value = addslashes($avt->Value);
+			//
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','$Name','$Value')");
+		}
+	}
+*/
+}
+
+
+
+function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, &$db=null)
+{
+	if (!is_array($folder)) return false;
 	if (!is_object($db)) $db = opensim_new_db();
+
+	$db->query("SELECT * FROM inventoryitems WHERE avatarID='$fromid'");
+    $errno = $db->Errno;
+
+	$invent = array();
+    if ($errno==0) {
+		$db2 = opensim_new_db();
+		while (list($assetID,$assetType,$inventoryName,$inventoryDescription,$inventoryNextPermissions,$inventoryCurrentPermissions,
+		 			$invType,$creatorID,$inventoryBasePermissions,$inventoryEveryOnePermissions,$salePrice,$saleType,$creationDate,
+		 			$groupID,$groupOwned,$flags,$inventoryID,$avatarID,$parentFolderID,$inventoryGroupPermissions) = $db->next_record()) {
+
+			$inventoryName = addslashes($inventoryName);
+			$inventoryDescription = addslashes($inventoryDescription);
+			$avatarID = $touuid;
+			//
+			$inventID = make_random_guid();
+			if (isset($folder[$parentFolderID])) $parent = $folder[$parentFolderID]->folderID;
+			else 								 $parent = '00000000-0000-0000-0000-000000000000';
+			//
+			$invent[$inventoryID] = $inventID;
+			//
+			$db2->query('INSERT INTO inventoryitems (assetID,assetType,inventoryName,inventoryDescription,inventoryNextPermissions,'.
+									'inventoryCurrentPermissions,invType,creatorID,inventoryBasePermissions,inventoryEveryOnePermissions,salePrice,'.
+									'saleType,creationDate,groupID,groupOwned,flags,inventoryID,avatarID,parentFolderID,inventoryGroupPermissions) '.
+							"VALUES ('$assetID','$assetType','$inventoryName','$inventoryDescription','$inventoryNextPermissions','$inventoryCurrentPermissions',".
+		 							"'$invType','$creatorID','$inventoryBasePermissions','$inventoryEveryOnePermissions','$salePrice','$saleType','$creationDate',".
+		 							"'$groupID','$groupOwned','$flags','$inventID','$avatarID','$parent','$inventoryGroupPermissions')");
+		}
+/*
+	$invent = array();
+    if ($errno==0) {
+		while (list($assetID,$assetType,$inventoryName,$inventoryDescription,$inventoryNextPermissions,$inventoryCurrentPermissions,
+		 			$invType,$creatorID,$inventoryBasePermissions,$inventoryEveryOnePermissions,$salePrice,$saleType,$creationDate,
+		 			$groupID,$groupOwned,$flags,$inventoryID,$avatarID,$parentFolderID,$inventoryGroupPermissions) = $db->next_record()) {
+			$invent[$inventoryID] = new stdClass();
+			$invent[$inventoryID]->assetID = $assetID;
+			$invent[$inventoryID]->assetType = $assetType;
+			$invent[$inventoryID]->inventoryName = $inventoryName;
+			$invent[$inventoryID]->inventoryDescription = $inventoryDescription;
+			$invent[$inventoryID]->inventoryNextPermissions = $inventoryNextPermissions;
+			$invent[$inventoryID]->inventoryCurrentPermissions = $inventoryCurrentPermissions;
+			$invent[$inventoryID]->invType = $invType;
+			$invent[$inventoryID]->creatorID = $creatorID;
+			$invent[$inventoryID]->inventoryBasePermissions = $inventoryBasePermissions;
+			$invent[$inventoryID]->inventoryEveryOnePermissions = $inventoryEveryOnePermissions;
+			$invent[$inventoryID]->salePrice = $salePrice;
+			$invent[$inventoryID]->saleType = $saleType;
+			$invent[$inventoryID]->creationDate = $creationDate;
+			$invent[$inventoryID]->groupID = $groupID;
+			$invent[$inventoryID]->groupOwned = $groupOwned;
+			$invent[$inventoryID]->inventoryID = make_random_guid();
+			$invent[$inventoryID]->avatarID = $touuid;
+			if (isset($folder[$parentFolderID])) $invent[$inventoryID]->parentFolderID = $folder[$parentFolderID]->folderID;
+			else 								 $invent[$inventoryID]->parentFolderID = '00000000-0000-0000-0000-000000000000';
+			$invent[$inventoryID]->inventoryGroupPermissions = $inventoryGroupPermissions;
+		}
+		
+		foreach($invent as $inv) {
+			$assetID = $inv->assetID;
+			$assetType = $inv->assetType;
+			$inventoryName = addslashes($inv->inventoryName);
+			$inventoryDescription = addslashes($inv->inventoryDescription);
+			$inventoryNextPermissions = $inv->inventoryNextPermissions;
+			$inventoryCurrentPermissions = $inv->inventoryCurrentPermissions;
+		 	$invType = $inv->invType;
+			$creatorID = $inv->creatorID;
+			$inventoryBasePermissions = $inv->inventoryBasePermissions;
+			$inventoryEveryOnePermissions = $inv->inventoryEveryOnePermissions;
+			$salePrice = $inv->salePrice;
+			$saleType = $inv->saleType;
+			$creationDate = $inv->creationDate;
+		 	$groupID = $inv->groupID;
+			$groupOwned = $inv->groupOwned;
+			$flags = $inv->flags;
+			$inventoryID = $inv->inventoryID;
+			$avatarID = $inv->avatarID;
+			$parentFolderID = $inv->parentFolderID;
+			$inventoryGroupPermissions = $inv->inventoryGroupPermissions;
+			//
+			$db->query('INSERT INTO inventoryitems (assetID,assetType,inventoryName,inventoryDescription,inventoryNextPermissions,'.
+									'inventoryCurrentPermissions,invType,creatorID,inventoryBasePermissions,inventoryEveryOnePermissions,salePrice,'.
+									'saleType,creationDate,groupID,groupOwned,flags,inventoryID,avatarID,parentFolderID,inventoryGroupPermissions) '.
+							"VALUES ('$assetID','$assetType','$inventoryName','$inventoryDescription','$inventoryNextPermissions','$inventoryCurrentPermissions',".
+		 							"'$invType','$creatorID','$inventoryBasePermissions','$inventoryEveryOnePermissions','$salePrice','$saleType','$creationDate',".
+		 							"'$groupID','$groupOwned','$flags','$inventoryID','$avatarID','$parentFolderID','$inventoryGroupPermissions')");
+		}
+*/
+	}
+
+	return $invent;
+}
+
+
+
+
+
+function  opensim_create_inventory_folders_dup($touuid, $fromid, &$db=null)
+{
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$db->query("SELECT * FROM inventoryfolders WHERE agentID='$fromid'");
+    $errno = $db->Errno;
+
+	$folder = array();
+    if ($errno==0) {
+        while(list($folderName,$type,$version,$folderID,$agentID,$parentFolderID) = $db->next_record()) {
+			$folder[$folderID] = new stdClass();
+			$folder[$folderID]->folderName = $folderName;
+			$folder[$folderID]->type = $type;
+			$folder[$folderID]->version	= $version;
+			$folder[$folderID]->folderID = make_random_guid();
+			$folder[$folderID]->agentID = $touuid;
+			$folder[$folderID]->parentFolderID = $parentFolderID;
+		}
+
+		foreach($folder as $fid=>$fld) {
+			$parent = '00000000-0000-0000-0000-000000000000';
+			if ($fld->parentFolderID) {
+				if (isset($folder[$fld->parentFolderID])) $parent = $folder[$fld->parentFolderID]->folderID;
+			}
+			$folder[$fid]->parentFolderID = $parent;
+
+			$folderName = addslashes($fld->folderName);
+			$folderType = $fld->type;
+			$version    = $fld->version;
+			$folderID   = $fld->folderID;
+			//
+			$db->query("INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) ".
+					   		"VALUES ('$folderName','$folderType','$version','$folderID','$touuid','$parent')");
+		}
+	}
+
+	return $folder;
+}
+
+
+
+
+function  opensim_create_default_avatar_wear($uuid, $invent, &$db=null)
+{
+	if (!is_object($db)) $db = opensim_new_db();
+	if (!$db->exist_table('Avatars')) return false;
 
 	$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','AvatarHeight','".DEFAULT_AVATAR_HEIGHT."')");
 	$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','AvatarType','1')");
 	$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Serial','0')");
 	$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','VisualParams','".DEFAULT_AVATAR_PARAMS."')");
 
-	if (is_array($inv)) {
-		if (isset($inv['Shape'])) 
-			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 0:0','".$inv['Shape'].':'.DEFAULT_ASSET_SHAPE."')");
-		if (isset($inv['Skin']))
-			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 1:0','".$inv['Skin']. ':'.DEFAULT_ASSET_SKIN."')");
-		if (isset($inv['Hair'])) 
-			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 2:0','".$inv['Hair']. ':'.DEFAULT_ASSET_HAIR."')");
-		if (isset($inv['Eyes'])) 
-			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 3:0','".$inv['Eyes']. ':'.DEFAULT_ASSET_EYES."')");
-		if (isset($inv['Shirt'])) 
-			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 4:0','".$inv['Shirt'].':'.DEFAULT_ASSET_SHIRT."')");
-		if (isset($inv['Pants'])) 
-			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 5:0','".$inv['Pants'].':'.DEFAULT_ASSET_PANTS."')");
+	if (is_array($invent)) {
+		if (isset($invent['Shape'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 0:0','".$invent['Shape'].':'.DEFAULT_ASSET_SHAPE."')");
+		if (isset($invent['Skin']))
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 1:0','".$invent['Skin']. ':'.DEFAULT_ASSET_SKIN."')");
+		if (isset($invent['Hair'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 2:0','".$invent['Hair']. ':'.DEFAULT_ASSET_HAIR."')");
+		if (isset($invent['Eyes'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 3:0','".$invent['Eyes']. ':'.DEFAULT_ASSET_EYES."')");
+		if (isset($invent['Shirt'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 4:0','".$invent['Shirt'].':'.DEFAULT_ASSET_SHIRT."')");
+		if (isset($invent['Pants'])) 
+			$db->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$uuid','Wearable 5:0','".$invent['Pants'].':'.DEFAULT_ASSET_PANTS."')");
 	}
 
 	return true;
@@ -1549,11 +1753,11 @@ function  opensim_create_default_inventory_items($uuid, &$db=null)
 
 
 
-function  opensim_create_inventory_folders($uuid, &$db=null)
+function  opensim_create_default_inventory_folders($uuid, &$db=null)
 {
 	global $OpenSimVersion;
 
-	if (!isGUID($uuid)) return 999;
+	if (!isGUID($uuid)) return false;
 
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
@@ -1561,80 +1765,36 @@ function  opensim_create_inventory_folders($uuid, &$db=null)
 	$my_inventory = make_random_guid();
 	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
 					  "VALUES ('My Inventory','8','1','$my_inventory','$uuid','00000000-0000-0000-0000-000000000000')");
-	$errno = $db->Errno;
-
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Textures','0','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Sounds','1','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Calling Cards','2','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Landmarks','3','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Clothing','5','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Objects','6','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Notecards','7','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Scripts','10','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Body Parts','13','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Trash','14','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Photo Album','15','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Lost And Found','16','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Animations','20','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-	if ($errno==0) {
-		$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
-						  "VALUES ('Gestures','21','1','".make_random_guid()."','$uuid','$my_inventory')");
-		$errno = $db->Errno;
-	}
-
-	return $errno;
+	//
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Textures','0','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Sounds','1','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Calling Cards','2','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Landmarks','3','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Clothing','5','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Objects','6','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Notecards','7','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Scripts','10','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Body Parts','13','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Trash','14','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Photo Album','15','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Lost And Found','16','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Animations','20','1','".make_random_guid()."','$uuid','$my_inventory')");
+	$db->query('INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) '.
+					  "VALUES ('Gestures','21','1','".make_random_guid()."','$uuid','$my_inventory')");
+	return true;
 }
 
 
