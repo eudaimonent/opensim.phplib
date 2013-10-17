@@ -1524,7 +1524,7 @@ function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, &$db=nul
 		 			$invType,$creatorID,$inventoryBasePermissions,$inventoryEveryOnePermissions,$salePrice,$saleType,$creationDate,
 		 			$groupID,$groupOwned,$flags,$inventoryID,$avatarID,$parentFolderID,$inventoryGroupPermissions) = $db->next_record()) {
 
-			if (isset($folder[$parentFolderID]) and $folder[$parentFolderID]->folderName=='Current Outfit') continue;
+			if (isset($folder[$parentFolderID]) and $folder[$parentFolderID]->type=='46') continue;		// Current Outfit
 
 			$inventoryName = addslashes($inventoryName);
 			$inventoryDescription = addslashes($inventoryDescription);
