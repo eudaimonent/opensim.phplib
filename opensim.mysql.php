@@ -32,7 +32,7 @@
  function  opensim_get_avatar_online($uuid, &$db=null)
  function  opensim_get_avatar_flags($uuid, &$db=null)
  function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
- function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, &$db=null)
+ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, $base_avatar, &$db=null)
  function  opensim_delete_avatar($uuid, &$db=null)
 
 // for Region
@@ -61,10 +61,10 @@
  function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $cachedir='', $use_tga=false)
 
 // for Inventory
+ function  opensim_create_avatar_inventory($uuid, $orig_uuid, $db=null)
  function  opensim_create_default_avatar_wear($uuid, $invent, $db=null)
  function  opensim_create_default_inventory_items($uuid, $db=null)
  function  opensim_create_default_inventory_folders($uuid, &$db=null)
-
  function  opensim_create_avatar_wear_dup($touuid, $fromid, $invent, &$db=null)
  function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, $db=null)
  function  opensim_create_inventory_folders_dup($touuid, $fromid, $db=null)
@@ -330,7 +330,8 @@ function  opensim_get_avatar_name($uuid, &$db=null)
 {
 	global $OpenSimVersion;
 
-	if (!isGUID($uuid)) return null;
+	$name = array();
+	if (!isGUID($uuid) or $uuid=='00000000-0000-0000-0000-000000000000') return $name;
 
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
@@ -347,7 +348,6 @@ function  opensim_get_avatar_name($uuid, &$db=null)
 		$db->query("SELECT username,lastname FROM users WHERE UUID='$uuid'");
 		list($firstname, $lastname) = $db->next_record();
 	}
-
 
 	$fullname = $firstname.' '.$lastname;
 	if ($fullname==' ') $fullname = null;
@@ -713,7 +713,7 @@ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
 
 
 
-function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, &$db=null)
+function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, $base_avatar, &$db=null)
 {
 	global $OpenSimVersion;
 
@@ -744,10 +744,8 @@ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregi
 			if ($errno==0) {
 
 				if ($db->exist_table('GridUser')) {
-					$db->query('INSERT INTO GridUser (UserID,HomeRegionID,HomePosition,HomeLookAt,'.
-													 'LastRegionID,LastPosition,LastLookAt,Online,Login,Logout) '.
-									"VALUES ('$UUID','$regionID','<128,128,0>','<0,0,0>',".
-											"'$regionID','<128,128,0>','<0,0,0>','false','0','0')");
+					$db->query('INSERT INTO GridUser (UserID,HomeRegionID,HomePosition,HomeLookAt,LastRegionID,LastPosition,LastLookAt,Online,Login,Logout) '.
+									"VALUES ('$UUID','$regionID','<128,128,0>','<0,0,0>','$regionID','<128,128,0>','<0,0,0>','false','0','0')");
 				}
 				$errno = $db->Errno;
 			}
@@ -758,15 +756,7 @@ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregi
 			}
 			//
 			if ($errno==0) {
-				//opensim_create_default_inventory_folders($UUID, $db);
-				//$invent = opensim_create_default_inventory_items($UUID, $db);
- 				//opensim_create_default_avatar_wear($UUID, $invent, $db);
-
-				//
-				$orig_avatar = '61dfee5c-2440-49f7-8668-a47cecb19d04';
-				$folder = opensim_create_inventory_folders_dup($UUID, $orig_avatar, $db);
-				$invent = opensim_create_inventory_items_dup($UUID, $orig_avatar, $folder, $db);
-				opensim_create_avatar_wear_dup($UUID, $orig_avatar, $invent, $db);
+				opensim_create_avatar_inventory($UUID, $base_avatar, $db);
 			}
 			else {
 				$db->query("DELETE FROM UserAccounts WHERE PrincipalID='$UUID'");
@@ -1457,16 +1447,37 @@ function  opensim_display_texture_data($uuid, $prog, $xsize='0', $ysize='0', $ca
 //
 
 
+function  opensim_create_avatar_inventory($uuid, $orig_uuid, &$db=null)
+{
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$name = opensim_get_avatar_name($orig_uuid, $db);
+
+	if (isset($name['fullname'])) {
+		$folder = opensim_create_inventory_folders_dup($uuid, $orig_uuid, $db);
+		$invent = opensim_create_inventory_items_dup($uuid, $orig_uuid, $folder, $db);
+		opensim_create_avatar_wear_dup($uuid, $orig_uuid, $invent, $db);
+	}
+	else {
+		opensim_create_default_inventory_folders($uuid, $db);
+		$invent = opensim_create_default_inventory_items($uuid, $db);
+		opensim_create_default_avatar_wear($uuid, $invent, $db);
+	}
+}
+
+
+
+
 function  opensim_create_avatar_wear_dup($touuid, $fromid, $invent, &$db=null)
 {
-	if (!is_array($invent)) return false;
+	if (!$invent or !is_array($invent)) return false;
 	if (!is_object($db)) $db = opensim_new_db();
 	if (!$db->exist_table('Avatars')) return false;
 
 	$db->query("SELECT * FROM Avatars WHERE PrincipalID='$fromid'");
-    $errno = $db->Errno;
+	$errno = $db->Errno;
 
-    if ($errno==0) {
+	if ($errno==0) {
 		$db2 = opensim_new_db();
 		while (list($PrincipalID,$Name,$Value) = $db->next_record()) {
 			//if (!strncmp($Name, "Wearable ", 9)) {
@@ -1482,6 +1493,9 @@ function  opensim_create_avatar_wear_dup($touuid, $fromid, $invent, &$db=null)
 			$db2->query("INSERT INTO Avatars (PrincipalID,Name,Value) VALUES ('$touuid','$Name','$Value')");
 		}
 	}
+
+	if ($errno!=0) return false;
+	return true;
 }
 
 
@@ -1492,14 +1506,14 @@ function  opensim_create_avatar_wear_dup($touuid, $fromid, $invent, &$db=null)
 //
 function  opensim_create_inventory_items_dup($touuid, $fromid, $folder, &$db=null)
 {
-	if (!is_array($folder)) return false;
+	$invent = array();
+	if (!$folder or !is_array($folder)) return $invent;
 	if (!is_object($db)) $db = opensim_new_db();
 
 	$db->query("SELECT * FROM inventoryitems WHERE avatarID='$fromid'");
-    $errno = $db->Errno;
+	$errno = $db->Errno;
 
-	$invent = array();
-    if ($errno==0) {
+	if ($errno==0) {
 		$db2 = opensim_new_db();
 		while (list($assetID,$assetType,$inventoryName,$inventoryDescription,$inventoryNextPermissions,$inventoryCurrentPermissions,
 		 			$invType,$creatorID,$inventoryBasePermissions,$inventoryEveryOnePermissions,$salePrice,$saleType,$creationDate,
@@ -1536,12 +1550,14 @@ function  opensim_create_inventory_folders_dup($touuid, $fromid, &$db=null)
 {
 	if (!is_object($db)) $db = opensim_new_db();
 
-	$db->query("SELECT * FROM inventoryfolders WHERE agentID='$fromid'");
-    $errno = $db->Errno;
-
 	$folder = array();
-    if ($errno==0) {
-        while(list($folderName,$type,$version,$folderID,$agentID,$parentFolderID) = $db->next_record()) {
+	if (!isGUID($formid)) return $folder;
+
+	$db->query("SELECT * FROM inventoryfolders WHERE agentID='$fromid'");
+	$errno = $db->Errno;
+
+	if ($errno==0) {
+		while(list($folderName,$type,$version,$folderID,$agentID,$parentFolderID) = $db->next_record()) {
 			$folder[$folderID] = new stdClass();
 			$folder[$folderID]->folderName = $folderName;
 			$folder[$folderID]->type = $type;
@@ -1560,7 +1576,7 @@ function  opensim_create_inventory_folders_dup($touuid, $fromid, &$db=null)
 
 			$folderName = addslashes($fld->folderName);
 			$folderType = $fld->type;
-			$version    = $fld->version;
+			$version	= $fld->version;
 			$folderID   = $fld->folderID;
 			//
 			$db->query("INSERT INTO inventoryfolders (folderName,type,version,folderID,agentID,parentFolderID) ".
@@ -2016,7 +2032,7 @@ function  opensim_get_voice_mode($region, &$db=null)
 		$voiceflag &= $flag;
 	}
 
-	if	    ($voiceflag==0x20000000) return 1;
+	if		($voiceflag==0x20000000) return 1;
 	else if ($voiceflag==0x40000000) return 2;
 	return 0;
 }	
@@ -2074,7 +2090,7 @@ function opensim_set_currency_transaction($sourceId, $destId, $amount, $type, $f
 	$handle   = 0;
 	$secure   = '00000000-0000-0000-0000-000000000000';
 	$client	  = $sourceId;
-	$UUID     = make_random_guid();
+	$UUID	 = make_random_guid();
 	$sourceID = $sourceId.'@'.$userip;
 	$destID   = $destId.'@'.$userip;
 	if ($client=='00000000-0000-0000-0000-000000000000') $client = $destId;
@@ -2094,7 +2110,7 @@ function opensim_set_currency_transaction($sourceId, $destId, $amount, $type, $f
 				$UUID."','".
 				$sourceID."','".
 				$destID."','".
-				$amount."','".               
+				$amount."','".			   
 				"00000000-0000-0000-0000-000000000000','".
 				$handle."','".
 				$db->escape($type)."','".
@@ -2219,7 +2235,7 @@ function  opensim_get_server_info($userid, &$db=null)
 			$serverip  = gethostbyname($info["serverIP"]);
 			$httpport  = $info["serverHttpPort"];
 			$serveruri = $info["serverURI"];
-			$secret    = null;
+			$secret	= null;
 		}
 	}
 
