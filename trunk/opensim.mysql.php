@@ -96,6 +96,12 @@
  function  opensim_check_region_secret($uuid, $secret, &$db=null)
  function  opensim_clear_login_table(&$db=null)
 
+// Debug or Test
+
+ function  opensim_debug_command(&$db=null)
+
+
+
 **********************************************************************************/
 
 
@@ -2368,11 +2374,11 @@ function  opensim_clear_login_table(&$db=null)
 
 	//
 	if ($OpenSimVersion==OPENSIM_V07) {
-		$db->query("DELETE FROM Presence");
+		$db->query('DELETE FROM Presence');
 	}
 
  	else if ($OpenSimVersion==OPENSIM_V06) {
-		//$db->query("DELETE FROM agents");
+		//$db->query('DELETE FROM agents');
 		return true;
 	}
 
@@ -2383,4 +2389,25 @@ function  opensim_clear_login_table(&$db=null)
 }
 
 
-?>
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//
+// Debug or Test
+//
+
+function  opensim_debug_command(&$db=null)
+{
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$db->query('SELECT name,assetType,id,asset_flags FROM assets');
+	
+	while (list($name,$type,$id,$flags) = $db->next_record()) {
+		echo $name." ".$type." ".$id." ".$flags."<br />";
+	}
+}
+
+
+
+
