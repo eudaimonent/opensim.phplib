@@ -43,12 +43,14 @@
  function  opensim_get_region_info($region, &$db=null)
  function  opensim_get_regions_infos($condition='', &$db=null)
  function  opensim_set_current_region($uuid, $regionid, &$db=null)
+ function  opensim_set_region_estate($region, $estate, $owner, &$db=null)
 
 // for Home Region
  function  opensim_get_home_region($uuid, &$db=null)
  function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', $pos_z='0', &$db=null)
 
-// for Estate Owner
+// for Estate
+ function  opensim_create_estate($estate, $owner, &$db=null)
  function  opensim_get_estate_owner($region, &$db=null)
  function  opensim_set_estate_owner($region, $owner, &$db=null)
 
@@ -1087,6 +1089,27 @@ function  opensim_set_current_region($uuid, $regionid, &$db=null)
 
 
 
+//
+// リージョンID $region のエステート名を $estate にし，オーナーを $owner(UUID) にする．
+// 他のリージョンには影響を及ぼさない．
+//
+function  opensim_set_region_estate($region, $estate, $owner, &$db=null)
+{
+	if (!isGUID($region) or $estate=='' or !isGUID($owner)) return false;
+
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$estate_id = opensim_create_estate($estate, $owner, $db);
+	if ($estate_id==0) return false;
+
+	$db->query("UPDATE estate_map SET EstateID='$estate_id' WHERE RegionID='$region'");
+
+	if ($db->Errno!=0) return false;
+	return true;
+}
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1157,8 +1180,43 @@ function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', 
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
-// for Estate Owner
+// for Estate
 //
+
+//
+// Estate名 $estate, オーナーUUID $owner のエステートを作成して ID を返す．
+// 既に有る場合も,そのエステートのIDを返す．
+// エラーの場合は 0を返す．
+//
+function  opensim_create_estate($estate, $owner, &$db=null)
+{	
+	if ($estate=='' or !isGUID($owner)) return 0;
+
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$db->query("SELECT EstateID FROM estate_settings WHERE EstateName='$estate' AND EstateOwner='$owner'");
+	if ($db->Errno==0) {
+		list($eid) = $db->next_record();
+		return $eid;
+	}
+
+    $insert_columns = 'EstateName,AbuseEmailToEstateOwne,DenyAnonymous,ResetHomeOnTeleport,FixedSun,DenyTransacted,BlockDwell,'.
+					  'DenyIdentified,AllowVoice,UseGlobalTime,PricePerMeter,TaxFree,AllowDirectTeleport,RedirectGridX,RedirectGridY,'.
+					  'ParentEstateID,SunPosition,EstateSkipScripts,BillableFactor,PublicAccess,AbuseEmail,EstateOwner,DenyMinors,'.
+					  'AllowLandmark,AllowParcelChanges,AllowSetHome';
+    $insert_values = "'$estate','0','0','0','0','0','0','0','1','1','1','0','1','0','0','1','0','0','0','1','','$owner','0','1','1','1'";
+
+    $db->query("INSERT INTO estate_settings ($insert_columns) VALUES ($insert_values)");
+
+	$db->query("SELECT EstateID FROM estate_settings WHERE EstateName='$estate' AND EstateOwner='$owner'");
+	if ($db->Errno==0) {
+		list($eid) = $db->next_record();
+		return $eid;
+	}
+	return 0;
+}
+
+
 
 //
 // SIMのリージョンIDからオーナーの情報を返す．
@@ -1207,6 +1265,10 @@ function  opensim_get_estate_owner($region, &$db=null)
 
 
 
+//
+// リージョンのエステートを変更せずに，オーナーのみ変更する．
+// 従って，同じエステートを持つ他のリージョンのオーナーも変更される．
+//
 function  opensim_set_estate_owner($region, $owner, &$db=null)
 {
 	global $OpenSimVersion;
@@ -1905,7 +1967,7 @@ function  opensim_succession_agents_to_griduser($region_id, &$db=null)
 
 				$db2->query('INSERT INTO GridUser (UserID,HomeRegionID,HomePosition,HomeLookAt,LastRegionID,LastPosition,LastLookAt,Online,Login,Logout) '.
 							"VALUES ('$UUID','$homeRegion','<$locX,$locY,$locZ>','<0,0,0>','$currentRegion','<128,128,0>','<0,0,0>','False','$login','$logout')");
-				$errno =$db2->Errno;
+				$errno = $db2->Errno;
 
 				if ($errno!=0) {
 					$db->query("DELETE FROM GridUser WHERE UserID='$UUID'");
