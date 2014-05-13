@@ -148,7 +148,7 @@ require_once(ENV_HELPER_PATH.'/../include/mysql.func.php');
 
 function  opensim_new_db($timeout=60)
 {
-	$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS, $timeout);
+	$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS, OPENSIM_DB_MYSQLI, $timeout);
 
 	return $db;
 }
@@ -2469,7 +2469,4 @@ function  opensim_debug_command(&$db=null)
 		echo $name." ".$type." ".$id." ".$flags."<br />";
 	}
 }
-
-
-
 

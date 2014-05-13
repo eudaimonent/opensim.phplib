@@ -52,10 +52,10 @@ function env_set_money_transaction($sourceId, $destId, $amount, $type, $falgs, $
 
 	$db = null;
 	if (defined('CURRENCY_DB_HOST')) {
-		$db = new DB(CURRENCY_DB_HOST, CURRENCY_DB_NAME, CURRENCY_DB_USER, CURRENCY_DB_PASS);
+		$db = new DB(CURRENCY_DB_HOST, CURRENCY_DB_NAME, CURRENCY_DB_USER, CURRENCY_DB_PASS, CURRENCY_DB_MYSQLI);
 	}
 	else {
-		$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS);
+		$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS, OPENSIM_DB_MYSQLI);
 	}
 	if ($db==null) return;
    
@@ -90,10 +90,10 @@ function env_get_money_balance($uuid)
 	
 	$db = null;
 	if (defined('CURRENCY_DB_HOST')) {
-		$db = new DB(CURRENCY_DB_HOST, CURRENCY_DB_NAME, CURRENCY_DB_USER, CURRENCY_DB_PASS);
+		$db = new DB(CURRENCY_DB_HOST, CURRENCY_DB_NAME, CURRENCY_DB_USER, CURRENCY_DB_PASS, CURRENCY_DB_MYSQLI);
 	}
 	else {
-		$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS);
+		$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS, OPENSIM_DB_MYSQLI);
 	}
 	if ($db==null) return 0;
 
@@ -111,5 +111,3 @@ function env_get_money_balance($uuid)
 }
 
 
-
-?>

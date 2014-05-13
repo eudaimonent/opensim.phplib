@@ -14,30 +14,33 @@ class DB
 	var $Errno    = 0;					// Error state of query
 	var $Error    = '';
 
+	var $UseMySQLi= false;
 	var $Timeout;						// not implement yet
 
 
 
 
-	function DB($dbhost=null, $dbname=null, $dbuser=null, $dbpass=null, $timeout=60)
+	function DB($dbhost=null, $dbname=null, $dbuser=null, $dbpass=null, $usemysqli=false, $timeout=60)
 	{
 		$this->Host 	= $dbhost;	
 		$this->Database = $dbname;	
 		$this->User 	= $dbuser;	
 		$this->Password = $dbpass;	
 
+		$this->UseMySQLi= $usemysqli;
 		$this->Timeout  = $timeout;
 		ini_set('mysql.connect_timeout', $timeout);
 	}
 
 
 
-	function set_DB($dbhost, $dbname, $dbuser, $dbpass)
+	function set_DB($dbhost, $dbname, $dbuser, $dbpass, $usemysqli=false)
 	{
 		$this->Host 	= $dbhost;	
 		$this->Database = $dbname;	
 		$this->User 	= $dbuser;	
 		$this->Password = $dbpass;	
+		$this->UseMySQLi= $usemysqli;
 	}
 
 
@@ -54,28 +57,30 @@ class DB
 	function connect()
 	{
 		if ($this->Link_ID==null) {
-/*
-			$this->Link_ID = mysqli_connect($this->Host, $this->User, $this->Password, $this->Database);
-			if (!$this->Link_ID) {
-				$this->Errno = 999;
-				$this->halt('cannot select database <i>'.$this->Database.'</i>');
+			//
+			if ($this->UseMySQLi) {
+				$this->Link_ID = mysqli_connect($this->Host, $this->User, $this->Password, $this->Database);
+				if (!$this->Link_ID) {
+					$this->Errno = 999;
+					$this->halt('cannot select database <i>'.$this->Database.'</i>');
+				}
+				mysqli_set_charset($this->Link_ID, 'utf8');
 			}
-			mysqli_set_charset($this->Link_ID, 'utf8');
-*/
-
-			$this->Link_ID = mysql_connect($this->Host, $this->User, $this->Password);
-			if (!$this->Link_ID) {
-				//$this->halt('Link_ID == false, connect failed');
-				$this->Errno = 999;
-				return;
-			}
-			mysql_set_charset('utf8'); 
-			$SelectResult = mysql_select_db($this->Database, $this->Link_ID);
-			if (!$SelectResult) {
-				$this->Errno = mysql_errno($this->Link_ID);
-				$this->Error = mysql_error($this->Link_ID);
-				$this->Link_ID = null;
-				$this->halt('cannot select database <i>'.$this->Database.'</i>');
+			//
+			else {
+				$this->Link_ID = mysql_connect($this->Host, $this->User, $this->Password);
+				if (!$this->Link_ID) {
+					$this->Errno = 999;
+					return;
+				}
+				mysql_set_charset('utf8'); 
+				$SelectResult = mysql_select_db($this->Database, $this->Link_ID);
+				if (!$SelectResult) {
+					$this->Errno = mysql_errno($this->Link_ID);
+					$this->Error = mysql_error($this->Link_ID);
+					$this->Link_ID = null;
+					$this->halt('cannot select database <i>'.$this->Database.'</i>');
+				}
 			}
 		}
 	}
@@ -95,8 +100,12 @@ class DB
 		$this->connect();
 		if ($this->Errno!=0) return 0;
 
-		$this->Query_ID = mysql_query($Query_String, $this->Link_ID);
-//		$this->Query_ID = mysqli_query($this->Link_ID, $Query_String);
+		if ($this->UseMySQLi) {
+			$this->Query_ID = mysqli_query($this->Link_ID, $Query_String);
+		}
+		else {
+			$this->Query_ID = mysql_query($Query_String, $this->Link_ID);
+		}
 		$this->Row = 0;
 		$this->Errno = mysql_errno();
 		$this->Error = mysql_error();
@@ -143,8 +152,12 @@ class DB
 		$this->connect();
 		if ($this->Errno!=0) return;
 
-		//$this->Query_ID = @mysql_query('OPTIMIZE TABLE '.$tbl_name, $this->Link_ID);
-		$this->Query_ID = @mysqli_query($this->Link_ID, 'OPTIMIZE TABLE '.$tbl_name);
+		if ($this->UseMySQLi) {
+			$this->Query_ID = @mysqli_query($this->Link_ID, 'OPTIMIZE TABLE '.$tbl_name);
+		}
+		else {
+			$this->Query_ID = @mysql_query('OPTIMIZE TABLE '.$tbl_name, $this->Link_ID);
+		}
 	}
 
 
@@ -307,4 +320,3 @@ class DB
 
 }
 
-?>
