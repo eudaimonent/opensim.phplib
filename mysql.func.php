@@ -54,22 +54,21 @@ class DB
 	function connect()
 	{
 		if ($this->Link_ID==null) {
+/*
 			$this->Link_ID = mysqli_connect($this->Host, $this->User, $this->Password, $this->Database);
 			if (!$this->Link_ID) {
 				$this->Errno = 999;
 				$this->halt('cannot select database <i>'.$this->Database.'</i>');
 			}
 			mysqli_set_charset($this->Link_ID, 'utf8');
+*/
 
-/*
 			$this->Link_ID = mysql_connect($this->Host, $this->User, $this->Password);
 			if (!$this->Link_ID) {
 				//$this->halt('Link_ID == false, connect failed');
 				$this->Errno = 999;
 				return;
 			}
-
-			//if (_CHARSET=='UTF-8') mysql_set_charset('utf8'); 
 			mysql_set_charset('utf8'); 
 			$SelectResult = mysql_select_db($this->Database, $this->Link_ID);
 			if (!$SelectResult) {
@@ -78,7 +77,6 @@ class DB
 				$this->Link_ID = null;
 				$this->halt('cannot select database <i>'.$this->Database.'</i>');
 			}
-*/
 		}
 	}
 
@@ -97,8 +95,8 @@ class DB
 		$this->connect();
 		if ($this->Errno!=0) return 0;
 
-		//$this->Query_ID = mysql_query($Query_String, $this->Link_ID);
-		$this->Query_ID = mysqli_query($this->Link_ID, $Query_String);
+		$this->Query_ID = mysql_query($Query_String, $this->Link_ID);
+//		$this->Query_ID = mysqli_query($this->Link_ID, $Query_String);
 		$this->Row = 0;
 		$this->Errno = mysql_errno();
 		$this->Error = mysql_error();
