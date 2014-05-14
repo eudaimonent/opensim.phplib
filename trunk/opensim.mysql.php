@@ -86,9 +86,9 @@
  function  opensim_set_voice_mode($region, $mode, &$db=null)
 
 // for Currency
- function opensim_set_currency_transaction($sourceId, $destId, $amount, $type, $flags, $description, $userip, &$db=null)
- function opensim_set_currency_balance($uuid, $userip, $amount, &$db=null)
- function opensim_get_currency_balance($uuid, $userip, &$db=null)
+ function opensim_set_currency_transaction($sourceId, $destId, $amount, $type, $flags, $description, &$db=null)
+ function opensim_set_currency_balance($uuid, $amount, &$db=null)
+ function opensim_get_currency_balance($uuid, &$db=null)
 
 // Tools
  function  opensim_get_servers_ip(&$db=null)
@@ -2154,7 +2154,7 @@ function  opensim_set_voice_mode($region, $mode, &$db=null)
 //
 // for Currency
 
-function opensim_set_currency_transaction($sourceId, $destId, $amount, $type, $flags, $description, $userip, &$db=null)
+function opensim_set_currency_transaction($sourceId, $destId, $amount, $type, $flags, $description, &$db=null)
 {
 	if (!isNumeric($amount)) return;
 	if (!isGUID($sourceId))  $sourceId = '00000000-0000-0000-0000-000000000000';
@@ -2166,8 +2166,8 @@ function opensim_set_currency_transaction($sourceId, $destId, $amount, $type, $f
 	$secure   = '00000000-0000-0000-0000-000000000000';
 	$client	  = $sourceId;
 	$UUID	 = make_random_guid();
-	$sourceID = $sourceId.'@'.$userip;
-	$destID   = $destId.'@'.$userip;
+	$sourceID = $sourceId;
+	$destID   = $destId;
 	if ($client=='00000000-0000-0000-0000-000000000000') $client = $destId;
 
 	$avt = opensim_get_avatar_session($client);
@@ -2198,13 +2198,13 @@ function opensim_set_currency_transaction($sourceId, $destId, $amount, $type, $f
 
 
 
-function opensim_set_currency_balance($agentid, $userip, $amount, &$db=null)
+function opensim_set_currency_balance($agentid, $amount, &$db=null)
 {
 	if (!isGUID($agentid) or !isNumeric($amount)) return;
 
 	if (!is_object($db)) $db = opensim_new_db();
 
-	$userid = $db->escape($agentid.'@'.$userip);
+	$userid = $db->escape($agentid);
 
 	$db->lock_table(CURRENCY_MONEY_TBL);
 
@@ -2222,14 +2222,14 @@ function opensim_set_currency_balance($agentid, $userip, $amount, &$db=null)
 
 
 
-function opensim_get_currency_balance($agentid, $userip, &$db=null)
+function opensim_get_currency_balance($agentid, &$db=null)
 {
 	if (!isGUID($agentid)) return;
 
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
 
-	$userid = $db->escape($agentid.'@'.$userip);
+	$userid = $db->escape($agentid);
 	$db->query("SELECT balance FROM ".CURRENCY_MONEY_TBL." WHERE user='".$userid."'");
 
 	$cash = 0;
