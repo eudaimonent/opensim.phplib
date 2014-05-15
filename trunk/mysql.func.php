@@ -7,9 +7,9 @@ class DB
 	var $Database = null;				// Logical database name on that server
 	var $User 	  = null;				// Database user
 	var $Password = null;				// Database user's password
-	var $Link_ID  = null;				// Result of mysql_connect()
-	var $Query_ID = null;				// Result of most recent mysql_query()
-	var $Record	  = array();			// Current mysql_fetch_array()-result
+	var $Link_ID  = null;				// Result of mysql_connect()/mysqli_connect()
+	var $Query_ID = null;				// Result of most recent mysql_query()/mysqli_query()
+	var $Record	  = array();			// Current mysql_fetch_array()/mysqli_fetch_array() -result
 	var $Row;							// Current row number
 	var $Errno    = 0;					// Error state of query
 	var $Error    = '';
@@ -58,16 +58,7 @@ class DB
 	{
 		if ($this->Link_ID==null) {
 			//
-			if ($this->UseMySQLi) {
-				$this->Link_ID = mysqli_connect($this->Host, $this->User, $this->Password, $this->Database);
-				if (!$this->Link_ID) {
-					$this->Errno = 999;
-					$this->halt('cannot select database <i>'.$this->Database.'</i>');
-				}
-				mysqli_set_charset($this->Link_ID, 'utf8');
-			}
-			//
-			else {
+			if (!$this->UseMySQLi) {
 				$this->Link_ID = mysql_connect($this->Host, $this->User, $this->Password);
 				if (!$this->Link_ID) {
 					$this->Errno = 999;
@@ -82,6 +73,16 @@ class DB
 					$this->halt('cannot select database <i>'.$this->Database.'</i>');
 				}
 			}
+			//
+			else {
+				$this->Link_ID = mysqli_connect($this->Host, $this->User, $this->Password, $this->Database);
+				if (!$this->Link_ID) {
+					$this->Errno = mysqli_errno($this->Link_ID);;
+					$this->Error = mysqli_error($this->Link_ID);
+					$this->halt('cannot select database <i>'.$this->Database.'</i>');
+				}
+				mysqli_set_charset($this->Link_ID, 'utf8');
+			}
 		}
 	}
 
@@ -90,7 +91,9 @@ class DB
  	function escape($String)
  	{
 		$this->connect();
- 		return mysql_real_escape_string($String);
+
+		if (!$this->UseMySQLi) return mysql_real_escape_string($String);
+ 		return mysqli_real_escape_string($this->Link_ID, $String);
  	}
 
 
@@ -100,15 +103,18 @@ class DB
 		$this->connect();
 		if ($this->Errno!=0) return 0;
 
-		if ($this->UseMySQLi) {
-			$this->Query_ID = mysqli_query($this->Link_ID, $Query_String);
+		if (!$this->UseMySQLi) {
+			$this->Query_ID = mysql_query($Query_String, $this->Link_ID);
+			$this->Errno = mysql_errno($this->Link_ID);
+			$this->Error = mysql_error($this->Link_ID);
 		}
 		else {
-			$this->Query_ID = mysql_query($Query_String, $this->Link_ID);
+			$this->Query_ID = mysqli_query($this->Link_ID, $Query_String);
+			$this->Errno = mysqli_errno($this->Link_ID);
+			$this->Error = mysqli_error($this->Link_ID);
 		}
 		$this->Row = 0;
-		$this->Errno = mysql_errno();
-		$this->Error = mysql_error();
+		//
 		if (!$this->Query_ID) {
 			$this->halt('Invalid SQL: '.$Query_String);
 		}
@@ -119,15 +125,29 @@ class DB
 
 	function next_record()
 	{
-		$this->Record = @mysql_fetch_array($this->Query_ID);
-		$this->Row += 1;
-		$this->Errno = mysql_errno();
-		$this->Error = mysql_error();
-		$stat = is_array($this->Record);
-		if (!$stat) {
-			@mysql_free_result($this->Query_ID);
-			$this->Query_ID = null;
+		if (!$this->UseMySQLi) {
+			$this->Record = @mysql_fetch_array($this->Query_ID);
+			$this->Row += 1;
+			$this->Errno = mysql_errno($this->Link_ID);
+			$this->Error = mysql_error($this->Link_ID);
+			$stat = is_array($this->Record);
+			if (!$stat) {
+				@mysql_free_result($this->Query_ID);
+				$this->Query_ID = null;
+			}
 		}
+		else {
+			$this->Record = @mysqli_fetch_array($this->Query_ID);
+			$this->Row += 1;
+			$this->Errno = mysqli_errno($this->Link_ID);
+			$this->Error = mysqli_error($this->Link_ID);
+			$stat = is_array($this->Record);
+			if (!$stat) {
+				@mysqli_free_result($this->Query_ID);
+				$this->Query_ID = null;
+			}
+		}
+
 		return $this->Record;
 	}
 
@@ -135,14 +155,16 @@ class DB
 
 	function num_rows()
 	{
-		return mysql_num_rows($this->Query_ID);
+		if (!$this->UseMySQLi) return mysql_num_rows($this->Query_ID);
+		return mysqli_num_rows($this->Query_ID);
 	}
 
 
 
 	function affected_rows()
 	{
-		return mysql_affected_rows($this->Link_ID);
+		if (!$this->UseMySQLi) return mysql_affected_rows($this->Link_ID);
+		return mysqli_affected_rows($this->Link_ID);
 	}
 
 
@@ -152,11 +174,11 @@ class DB
 		$this->connect();
 		if ($this->Errno!=0) return;
 
-		if ($this->UseMySQLi) {
-			$this->Query_ID = @mysqli_query($this->Link_ID, 'OPTIMIZE TABLE '.$tbl_name);
+		if (!$this->UseMySQLi) {
+			$this->Query_ID = @mysql_query('OPTIMIZE TABLE '.$tbl_name, $this->Link_ID);
 		}
 		else {
-			$this->Query_ID = @mysql_query('OPTIMIZE TABLE '.$tbl_name, $this->Link_ID);
+			$this->Query_ID = @mysqli_query($this->Link_ID, 'OPTIMIZE TABLE '.$tbl_name);
 		}
 	}
 
@@ -165,7 +187,12 @@ class DB
 	function clean_results()
 	{
 		if ($this->Query_ID!=null) {
-			mysql_freeresult($this->Query_ID);
+			if (!$this->UseMySQLi) {
+				mysql_freeresult($this->Query_ID);
+			}
+			else {
+				mysqli_freeresult($this->Query_ID);
+			}
 			$this->Query_ID = null;
 		}
 	}
@@ -176,7 +203,8 @@ class DB
 	{
 	/*
 		if ($this->Link_ID) {
-			mysql_close($this->Link_ID);
+			if (!$this->UseMySQLi) mysql_close($this->Link_ID);
+			mysqli_close($this->Link_ID);
 			$this->Link_ID = null;
 		}
 	*/
@@ -200,18 +228,6 @@ class DB
 				}
 			}
 		}
-
-		/*
-		$this->connect();
-		if ($this->Errno!=0) return false;
-
-		$tl = mysql_list_tables($this->Database, $this->Link_ID);
-		while($row=mysql_fetch_row($tl)) {
-			if (in_array($table, $row)) {
-				$ret = true;
-				break;
-			}
-		}*/
 
 		return $ret;
 	}
