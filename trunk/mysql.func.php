@@ -77,8 +77,8 @@ class DB
 			else {
 				$this->Link_ID = mysqli_connect($this->Host, $this->User, $this->Password, $this->Database);
 				if (!$this->Link_ID) {
-					$this->Errno = mysqli_errno($this->Link_ID);;
-					$this->Error = mysqli_error($this->Link_ID);
+					$this->Errno = 999;
+					$this->Error = mysqli_connect_error();
 					$this->halt('cannot select database <i>'.$this->Database.'</i>');
 				}
 				mysqli_set_charset($this->Link_ID, 'utf8');
