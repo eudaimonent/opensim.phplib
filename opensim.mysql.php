@@ -875,14 +875,16 @@ function  opensim_get_region_uuid($name, &$db=null)
 {
 	global $OpenSimVersion;
 
-	if (!isAlphabetNumericSpecial($name)) return false;
+//	$name = addslashes($name);
+//	if (!isAlphabetNumericSpecial($name)) return false;
 
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
 
 	$uuid = '';
 	if ($name!='') {
-		$db->query("SELECT uuid FROM regions WHERE regionName='$name'");
+		$query = "SELECT uuid FROM regions WHERE regionName='$name'";
+		$db->query($query);
 		list($uuid) = $db->next_record();
 	}
   
@@ -1145,12 +1147,13 @@ function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', 
 	global $OpenSimVersion;
 
 	if (!isGUID($uuid)) return false;
-	if (!isAlphabetNumericSpecial($hmregion)) return false;
+//	if (!isAlphabetNumericSpecial($hmregion)) return false;
 	if (!isNumeric($pos_x) or !isNumeric($pos_y) or !isNumeric($pos_z)) return false;
 
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
 
+//	$hmregion = addslashes($hmregion);
 	$db->query("SELECT uuid,regionHandle FROM regions WHERE regionName='$hmregion'");
 	$errno = $db->Errno;
 	if ($errno==0) {
