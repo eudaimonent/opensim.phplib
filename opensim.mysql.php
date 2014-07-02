@@ -2227,6 +2227,8 @@ function opensim_set_currency_balance($agentid, $amount, &$db=null)
 
 function opensim_get_currency_balance($agentid, &$db=null)
 {
+	global $OpenSimVersion;
+
 	if (!isGUID($agentid)) return;
 
 	if (!is_object($db)) $db = opensim_new_db();
