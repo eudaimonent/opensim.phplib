@@ -51,7 +51,7 @@
 
 // for Estate
  function  opensim_create_estate($estate, $owner, &$db=null)
- function  opensim_get_estate_owner($region, &$db=null)
+ function  opensim_get_estate_info($region, &$db=null)
  function  opensim_set_estate_owner($region, $owner, &$db=null)
 
 // for Parcel
@@ -951,7 +951,7 @@ function  opensim_get_region_info($region, &$db=null)
 	$db->query($sql);
 
 	list($regionHandle, $regionName, $regionSecret, $serverIP, $serverHttpPort, $serverURI, $locX, $locY) = $db->next_record();
-	$rginfo = opensim_get_estate_owner($region, $db);
+	$rginfo = opensim_get_estate_info($region, $db);
 
 	$rginfo['regionHandle']   = $regionHandle;
 	$rginfo['regionName'] 	  = $regionName;
@@ -981,6 +981,7 @@ function  opensim_get_region_info($region, &$db=null)
 //		$rginfos[$UUID]['owner_uuid'] 	 ... UUID of region owner
 //		$rginfos[$UUID]['estate_id'] 	 ... ID of estate
 //		$rginfos[$UUID]['estate_owner']  ... UUID of estate owner
+//		$rginfos[$UUID]['estate_name']   ... estate name
 //		$rginfos[$UUID]['est_firstname'] ... first name
 //		$rginfos[$UUID]['est_lastname']  ... last name
 //		$rginfos[$UUID]['est_fullname']  ... full name
@@ -994,7 +995,7 @@ function  opensim_get_regions_infos($condition='', &$db=null)
 
 	$rginfos = array();
 
-	$items = ' regions.uuid,regionName,locX,locY,serverIP,serverURI,serverHttpPort,owner_uuid,estate_map.EstateID,EstateOwner,';
+	$items = ' regions.uuid,regionName,locX,locY,serverIP,serverURI,serverHttpPort,owner_uuid,estate_map.EstateID,EstateOwner,EstateName,';
  	$join1 = ' FROM regions LEFT JOIN estate_map ON RegionID=regions.uuid ';
  	$join2 = ' LEFT JOIN estate_settings ON estate_map.EstateID=estate_settings.EstateID ';
 
@@ -1017,7 +1018,7 @@ function  opensim_get_regions_infos($condition='', &$db=null)
 	$db->query($query_str);
 	if ($db->Errno==0) {
 		while (list($UUID,$regionName,$locX,$locY,$serverIP,$serverURI,$serverPort,
-						$owneruuid,$estateid,$estateowner,$firstname,$lastname) = $db->next_record()) {
+						$owneruuid,$estateid,$estateowner,$estatename,$firstname,$lastname) = $db->next_record()) {
 			$rginfos[$UUID]['UUID']		  	= $UUID;
 			$rginfos[$UUID]['regionName'] 	= $regionName;
 			$rginfos[$UUID]['locX']		  	= $locX;
@@ -1028,6 +1029,7 @@ function  opensim_get_regions_infos($condition='', &$db=null)
 			$rginfos[$UUID]['owner_uuid'] 	= $owneruuid;
 			$rginfos[$UUID]['estate_id'] 	= $estateid;
 			$rginfos[$UUID]['estate_owner'] = $estateowner;
+			$rginfos[$UUID]['estate_name']  = $estatename;
 			$rginfos[$UUID]['est_firstname']= $firstname;
 			$rginfos[$UUID]['est_lastname'] = $lastname;
 			$rginfos[$UUID]['est_fullname'] = null;
@@ -1224,7 +1226,7 @@ function  opensim_create_estate($estate, $owner, &$db=null)
 //
 // SIMのリージョンIDからオーナーの情報を返す．
 // 
-function  opensim_get_estate_owner($region, &$db=null)
+function  opensim_get_estate_info($region, &$db=null)
 {
 	global $OpenSimVersion;
 
@@ -1239,12 +1241,12 @@ function  opensim_get_estate_owner($region, &$db=null)
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
 	
 	if ($db->exist_table('UserAccounts')) {
-		$rqdt = 'PrincipalID,FirstName,LastName';
+		$rqdt = 'PrincipalID,FirstName,LastName,estate_settings.EstateID,EstateOwner,EstateName';
 		$tbls = 'UserAccounts,estate_map,estate_settings';
 		$cndn = "RegionID='$region' AND estate_map.EstateID=estate_settings.EstateID AND EstateOwner=PrincipalID";
 	}
 	else if ($db->exist_table('users')) {
-		$rqdt = 'UUID,username,lastname';
+		$rqdt = 'UUID,username,lastname,estate_settings.EstateID,EstateOwner,EstateName';
 		$tbls = 'users,estate_map,estate_settings';
 		$cndn = "RegionID='$region' AND estate_map.EstateID=estate_settings.EstateID AND EstateOwner=UUID";
 	}
@@ -1253,15 +1255,18 @@ function  opensim_get_estate_owner($region, &$db=null)
 	}
 
 	$db->query('SELECT '.$rqdt.' FROM '.$tbls.' WHERE '.$cndn);
-	list($owneruuid, $firstname, $lastname) = $db->next_record();
+	list($owneruuid, $firstname, $lastname, $estateid, $estateowner, $estatename) = $db->next_record();
 
 	$fullname = $firstname.' '.$lastname;
 	if ($fullname==' ') $fullname = null;
 
-	$name['firstname']  = $firstname;
-	$name['lastname']   = $lastname;
-	$name['fullname']   = $fullname;
-	$name['owner_uuid'] = $owneruuid;
+	$name['firstname']   = $firstname;
+	$name['lastname']    = $lastname;
+	$name['fullname']    = $fullname;
+	$name['owner_uuid']  = $owneruuid;
+	$name['estate_id']   = $estateid;
+	$name['estate_owner']= $estateowner;
+	$name['estate_name'] = $estatename;
 
 	return $name;
 }
