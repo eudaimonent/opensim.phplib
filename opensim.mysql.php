@@ -32,7 +32,7 @@
  function  opensim_get_avatar_online($uuid, &$db=null)
  function  opensim_get_avatar_flags($uuid, &$db=null)
  function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
- function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, $base_avatar, &$db=null)
+ function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, $base_avatar='00000000-0000-0000-0000-000000000000', &$db=null)
  function  opensim_delete_avatar($uuid, &$db=null)
 
 // for Region
@@ -724,7 +724,7 @@ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
 
 
 
-function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, $base_avatar, &$db=null)
+function  opensim_create_avatar($UUID, $firstname, $lastname, $passwd, $homeregion, $base_avatar='00000000-0000-0000-0000-000000000000', &$db=null)
 {
 	global $OpenSimVersion;
 
