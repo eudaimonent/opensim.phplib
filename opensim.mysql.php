@@ -149,7 +149,7 @@ require_once(ENV_HELPER_PATH.'/../include/mysql.func.php');
 function  opensim_new_db($timeout=60)
 {
 	$use_mysqli = false;
-	if (defined(OPENSIM_DB_MYSQLI)) $use_mysqli = OPENSIM_DB_MYSQLI;
+	if (defined('OPENSIM_DB_MYSQLI')) $use_mysqli = OPENSIM_DB_MYSQLI;
 
 	$db = new DB(OPENSIM_DB_HOST, OPENSIM_DB_NAME, OPENSIM_DB_USER, OPENSIM_DB_PASS, $use_mysqli, $timeout);
 
