@@ -2268,8 +2268,8 @@ function  opensim_get_servers_ip(&$db=null)
 	$db->query("SELECT DISTINCT serverIP FROM regions");
 	if ($db->Errno==0) {
 		$count = 0;
-		while (list($serverIP) = $db->next_record()) {
-			$ips[$count] = $serverIP;
+		while (list($server) = $db->next_record()) {
+			$ips[$count] = gethostbyname($server);
 			$count++;
 		}		
 	}
@@ -2349,7 +2349,7 @@ function  opensim_is_access_from_region_server()
 	$ips = opensim_get_servers_ip();
 
 	foreach($ips as $ip) {
-		if ($ip == $remote_addr) {
+		if ($ip==$remote_addr) {
 			$ip_match = true;
 			break;
 		}
