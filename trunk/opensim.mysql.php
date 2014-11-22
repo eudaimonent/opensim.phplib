@@ -927,6 +927,11 @@ function  opensim_get_regions_names($condition='', &$db=null)
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
 
+	if ($condition!='') {
+		$replace_str = '/[;\'#-]/';
+		$$condition = preg_replace($replace_str, '', $condition);
+	}
+
 	$regions = array();
 	$db->query("SELECT regionName FROM regions ".$condition);
 	while ($db->Errno==0 and list($region)=$db->next_record()) {
@@ -997,6 +1002,11 @@ function  opensim_get_regions_infos($condition='', &$db=null)
 
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
+
+	if ($condition!='') {
+		$replace_str = '/[;\'#-]/';
+		$$condition = preg_replace($replace_str, '', $condition);
+	}
 
 	$rginfos = array();
 
