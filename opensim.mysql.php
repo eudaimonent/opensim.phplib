@@ -53,7 +53,10 @@
  function  opensim_create_estate($estate, $owner, &$db=null)
  function  opensim_get_estates_infos(&$db=null)
  function  opensim_get_estate_info($region, &$db=null)
+ function  opensim_set_region_estateid($region, $estateid, &$db=null)
  function  opensim_set_estate_owner($region, $owner, &$db=null)
+ function  opensim_del_estate($id, &$db=null)
+ function  opensim_update_estate($id, $name, $owner, &$db=null)
 
 // for Parcel
  function  opensim_get_parcel_name($parcel, &$db=null)
@@ -1186,6 +1189,7 @@ function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', 
 
 //
 // リージョンID $region のエステート名を $estate にし，オーナーを $owner(UUID) にする．
+// エステート名と オーナー(UUID) の組み合わせが存在しない場合は，新しくエステートを作成する．
 //
 function  opensim_set_region_estate($region, $estate, $owner, &$db=null)
 {
@@ -1203,7 +1207,6 @@ function  opensim_set_region_estate($region, $estate, $owner, &$db=null)
 }
 
 
-
 //
 // Estate名 $estate, オーナーUUID $owner のエステートを作成して ID を返す．
 // 既に有る場合も,そのエステートのIDを返す．
@@ -1218,10 +1221,10 @@ function  opensim_create_estate($estate, $owner, &$db=null)
 	$db->query("SELECT EstateID FROM estate_settings WHERE EstateName='$estate' AND EstateOwner='$owner'");
 	if ($db->Errno==0) {
 		list($eid) = $db->next_record();
-		return $eid;
+		if (intval($eid)>0) return $eid;
 	}
 
-    $insert_columns = 'EstateName,AbuseEmailToEstateOwne,DenyAnonymous,ResetHomeOnTeleport,FixedSun,DenyTransacted,BlockDwell,'.
+    $insert_columns = 'EstateName,AbuseEmailToEstateOwner,DenyAnonymous,ResetHomeOnTeleport,FixedSun,DenyTransacted,BlockDwell,'.
 					  'DenyIdentified,AllowVoice,UseGlobalTime,PricePerMeter,TaxFree,AllowDirectTeleport,RedirectGridX,RedirectGridY,'.
 					  'ParentEstateID,SunPosition,EstateSkipScripts,BillableFactor,PublicAccess,AbuseEmail,EstateOwner,DenyMinors,'.
 					  'AllowLandmark,AllowParcelChanges,AllowSetHome';
@@ -1243,41 +1246,32 @@ function  opensim_get_estates_infos(&$db=null)
 {
 	global $OpenSimVersion;
 
-	$estates   = array();
-	$firstname = null;
-	$lastname  = null;
-	$estateID  = null;
-	$estateOwn = null;
-	$estateName= null;
+	$estates = array();
 
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
 	
-	if ($db->exist_table('UserAccounts')) {
-		$rqdt = 'FirstName,LastName,estate_settings.EstateID,EstateOwner,EstateName';
-		$tbls = 'UserAccounts,estate_map,estate_settings';
-		$cndn = 'estate_map.EstateID=estate_settings.EstateID AND EstateOwner=PrincipalID ORDER BY estate_settings.EstateID';
-	}
-	else if ($db->exist_table('users')) {
-		$rqdt = 'username,lastname,estate_settings.EstateID,EstateOwner,EstateName';
-		$tbls = 'users,estate_map,estate_settings';
-		$cndn = 'estate_map.EstateID=estate_settings.EstateID AND EstateOwner=UUID ORDER BY estate_settings.EstateID';
-	}
-	else {
-		return null;
-	}
-
-	$db->query('SELECT '.$rqdt.' FROM '.$tbls.' WHERE '.$cndn);
+	$db->query('SELECT EstateID,EstateOwner,EstateName FROM estate_settings ORDER BY EstateID');
 	if ($db->Errno==0) {
-		while (list($firstname, $lastname, $estateID, $estateOwn, $estateName) = $db->next_record()) {
-			$estates[$estateID]['firstname'] 	= $firstname;
-			$estates[$estateID]['lastname']  	= $lastname;
-			$estates[$estateID]['fullname']  	= $firstname.' '.$lastname;
-			$estates[$estateID]['estate_id'] 	= $estateID;
-			$estates[$estateID]['estate_owner']	= $estateOwn;
-			$estates[$estateID]['estate_name'] 	= $estateName;
+		while (list($estateid, $estateown, $estatename) = $db->next_record()) {
+			$estates[$estateid]['estate_id'] 	= $estateid;
+			$estates[$estateid]['estate_owner']	= $estateown;
+			$estates[$estateid]['estate_name'] 	= $estatename;
+			$estates[$estateid]['firstname'] 	= '';
+			$estates[$estateid]['lastname']  	= '';
+			$estates[$estateid]['fullname']  	= '';
 		}
 	}      
+
+	foreach($estates as $estate) {
+		$avatar = opensim_get_avatar_name($estate['estate_owner']);
+		if ($avatar!=null) {
+			$estateid = $estate['estate_id'];
+			$estates[$estateid]['firstname'] = $avatar['firstname'];
+			$estates[$estateid]['lastname']  = $avatar['lastname'];
+			$estates[$estateid]['fullname']  = $avatar['fullname'];
+		}
+	}
 
 	return $estates;
 }
@@ -1335,6 +1329,30 @@ function  opensim_get_estate_info($region, &$db=null)
 }
 
 
+//
+// リージョンのエステートを変更する．
+//
+function  opensim_set_region_estateid($region, $estateid, &$db=null)
+{
+	if (!isGUID($region) or !isNumeric($estateid)) return false;
+
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$db->query("SELECT EstateID FROM estate_settings WHERE EstateID='$estateid'");
+	list($esid) = $db->next_record();
+	if (intval($esid)==0) return;
+
+	$db->query("SELECT EstateID FROM estate_map WHERE RegionID='$region'");
+	list($esid) = $db->next_record();
+
+	if (intval($esid)!=$estateid) {
+		$db->query("UPDATE estate_map SET EstateID='$estateid' WHERE RegionID='$region'");
+	}
+	else if (intval($esid)==0) {
+		$db->query("INSERT INTO estate_map (RegionID,EstateID) VALUES ('$region','$estateid')");
+	}
+}
+
 
 //
 // リージョンのエステートを変更せずに，オーナーのみ変更する．
@@ -1342,21 +1360,46 @@ function  opensim_get_estate_info($region, &$db=null)
 //
 function  opensim_set_estate_owner($region, $owner, &$db=null)
 {
-	global $OpenSimVersion;
-
-	if (!isGUID($region)) return false;
-	if (!isGUID($owner))  return false;
+	if (!isGUID($region) or !isGUID($owner))  return false;
 
 	if (!is_object($db)) $db = opensim_new_db();
-	if ($OpenSimVersion==null) opensim_get_db_version($db);
 
 	$db->query("UPDATE estate_settings,estate_map SET EstateOwner='$owner' WHERE estate_settings.EstateID=estate_map.EstateID AND RegionID='$region'");
 	$errno = $db->Errno;
 
 	if ($errno==0) $db->query("UPDATE regions SET owner_uuid='$owner' WHERE uuid='$region'");
-
 	if ($errno!=0) return false;
+
 	return true;
+}
+
+
+function  opensim_del_estate($id, &$db=null)
+{
+	if (!isNumeric($id)) return;
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$db->query("DELETE from estate_settings WHERE EstateID=$id");
+}
+
+
+function  opensim_update_estate($id, $name, $owner, &$db=null)
+{
+	global $OpenSimVersion;
+
+	if (!isNumeric($id)) return;
+	if (!$name and !$owner) return;
+	if (!is_object($db)) $db = opensim_new_db();
+	if ($OpenSimVersion==null) opensim_get_db_version($db);
+	
+	if ($name) {
+		$db->query("UPDATE estate_settings SET EstateName='$name' WHERE EstateID=$id");
+	}
+		
+	$uuid = opensim_get_avatar_uuid($owner);
+	if ($uuid) {
+		$db->query("UPDATE estate_settings SET EstateOwner='$uuid' WHERE EstateID=$id");
+	}
 }
 
 
