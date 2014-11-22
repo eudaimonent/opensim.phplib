@@ -43,14 +43,15 @@
  function  opensim_get_region_info($region, &$db=null)
  function  opensim_get_regions_infos($condition='', &$db=null)
  function  opensim_set_current_region($uuid, $regionid, &$db=null)
- function  opensim_set_region_estate($region, $estate, $owner, &$db=null)
 
 // for Home Region
  function  opensim_get_home_region($uuid, &$db=null)
  function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', $pos_z='0', &$db=null)
 
 // for Estate
+ function  opensim_set_region_estate($region, $estate, $owner, &$db=null)
  function  opensim_create_estate($estate, $owner, &$db=null)
+ function  opensim_get_estates_infos(&$db=null)
  function  opensim_get_estate_info($region, &$db=null)
  function  opensim_set_estate_owner($region, $owner, &$db=null)
 
@@ -98,8 +99,8 @@
  function  opensim_check_region_secret($uuid, $secret, &$db=null)
  function  opensim_clear_login_table(&$db=null)
 
-// Debug or Test
 
+// Debug or Test
  function  opensim_debug_command(&$db=null)
 
 
@@ -1099,27 +1100,6 @@ function  opensim_set_current_region($uuid, $regionid, &$db=null)
 
 
 
-//
-// リージョンID $region のエステート名を $estate にし，オーナーを $owner(UUID) にする．
-// 他のリージョンには影響を及ぼさない．
-//
-function  opensim_set_region_estate($region, $estate, $owner, &$db=null)
-{
-	if (!isGUID($region) or $estate=='' or !isGUID($owner)) return false;
-
-	if (!is_object($db)) $db = opensim_new_db();
-
-	$estate_id = opensim_create_estate($estate, $owner, $db);
-	if ($estate_id==0) return false;
-
-	$db->query("UPDATE estate_map SET EstateID='$estate_id' WHERE RegionID='$region'");
-
-	if ($db->Errno!=0) return false;
-	return true;
-}
-
-
-
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1195,6 +1175,26 @@ function  opensim_set_home_region($uuid, $hmregion, $pos_x='128', $pos_y='128', 
 //
 
 //
+// リージョンID $region のエステート名を $estate にし，オーナーを $owner(UUID) にする．
+//
+function  opensim_set_region_estate($region, $estate, $owner, &$db=null)
+{
+	if (!isGUID($region) or $estate=='' or !isGUID($owner)) return false;
+
+	if (!is_object($db)) $db = opensim_new_db();
+
+	$estate_id = opensim_create_estate($estate, $owner, $db);
+	if ($estate_id==0) return false;
+
+	$db->query("UPDATE estate_map SET EstateID='$estate_id' WHERE RegionID='$region'");
+
+	if ($db->Errno!=0) return false;
+	return true;
+}
+
+
+
+//
 // Estate名 $estate, オーナーUUID $owner のエステートを作成して ID を返す．
 // 既に有る場合も,そのエステートのIDを返す．
 // エラーの場合は 0を返す．
@@ -1229,8 +1229,53 @@ function  opensim_create_estate($estate, $owner, &$db=null)
 
 
 
+function  opensim_get_estates_infos(&$db=null)
+{
+	global $OpenSimVersion;
+
+	$estates   = array();
+	$firstname = null;
+	$lastname  = null;
+	$estateID  = null;
+	$estateOwn = null;
+	$estateName= null;
+
+	if (!is_object($db)) $db = opensim_new_db();
+	if ($OpenSimVersion==null) opensim_get_db_version($db);
+	
+	if ($db->exist_table('UserAccounts')) {
+		$rqdt = 'FirstName,LastName,estate_settings.EstateID,EstateOwner,EstateName';
+		$tbls = 'UserAccounts,estate_map,estate_settings';
+		$cndn = 'estate_map.EstateID=estate_settings.EstateID AND EstateOwner=PrincipalID ORDER BY estate_settings.EstateID';
+	}
+	else if ($db->exist_table('users')) {
+		$rqdt = 'username,lastname,estate_settings.EstateID,EstateOwner,EstateName';
+		$tbls = 'users,estate_map,estate_settings';
+		$cndn = 'estate_map.EstateID=estate_settings.EstateID AND EstateOwner=UUID ORDER BY estate_settings.EstateID';
+	}
+	else {
+		return null;
+	}
+
+	$db->query('SELECT '.$rqdt.' FROM '.$tbls.' WHERE '.$cndn);
+	if ($db->Errno==0) {
+		while (list($firstname, $lastname, $estateID, $estateOwn, $estateName) = $db->next_record()) {
+			$estates[$estateID]['firstname'] 	= $firstname;
+			$estates[$estateID]['lastname']  	= $lastname;
+			$estates[$estateID]['fullname']  	= $firstname.' '.$lastname;
+			$estates[$estateID]['estate_id'] 	= $estateID;
+			$estates[$estateID]['estate_owner']	= $estateOwn;
+			$estates[$estateID]['estate_name'] 	= $estateName;
+		}
+	}      
+
+	return $estates;
+}
+
+
+
 //
-// SIMのリージョンIDからオーナーの情報を返す．
+// SIMのリージョンIDからエステートの情報を返す．
 // 
 function  opensim_get_estate_info($region, &$db=null)
 {
@@ -1266,9 +1311,11 @@ function  opensim_get_estate_info($region, &$db=null)
 	$fullname = $firstname.' '.$lastname;
 	if ($fullname==' ') $fullname = null;
 
+	// owner name
 	$name['firstname']   = $firstname;
 	$name['lastname']    = $lastname;
 	$name['fullname']    = $fullname;
+	//
 	$name['owner_uuid']  = $owneruuid;
 	$name['estate_id']   = $estateid;
 	$name['estate_owner']= $estateowner;
