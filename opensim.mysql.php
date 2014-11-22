@@ -265,8 +265,11 @@ function  opensim_check_db(&$db=null)
 	$ret['user_count']		 = 0;
 	$ret['region_count']	 = 0;
 
+	//
 	if (!is_object($db)) $db = opensim_new_db(3);
-	if ($db==null) return $ret;
+	if ($db==null) {
+		return $ret;
+	}
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
 
 	if ($db->exist_table('regions')) {
