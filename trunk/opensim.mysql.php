@@ -947,10 +947,10 @@ function  opensim_get_region_info($region, &$db=null)
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
 
-	$sql = "SELECT regionHandle,regionName,regionSecret,serverIP,serverHttpPort,serverURI,locX,locY FROM regions WHERE uuid='$region'";
+	$sql = "SELECT regionHandle,regionName,regionSecret,serverIP,serverHttpPort,serverURI,locX,locY,sizeX,sizeY FROM regions WHERE uuid='$region'";
 	$db->query($sql);
 
-	list($regionHandle, $regionName, $regionSecret, $serverIP, $serverHttpPort, $serverURI, $locX, $locY) = $db->next_record();
+	list($regionHandle, $regionName, $regionSecret, $serverIP, $serverHttpPort, $serverURI, $locX, $locY, $sizeX, $sizeY) = $db->next_record();
 	$rginfo = opensim_get_estate_info($region, $db);
 
 	$rginfo['regionHandle']   = $regionHandle;
@@ -961,6 +961,8 @@ function  opensim_get_region_info($region, &$db=null)
 	$rginfo['serverURI'] 	  = $serverURI;
 	$rginfo['locX'] 		  = $locX;
 	$rginfo['locY'] 		  = $locY;
+	$rginfo['sizeX'] 		  = $sizeX;
+	$rginfo['sizeY'] 		  = $sizeY;
 
 	return $rginfo;
 }
@@ -975,6 +977,8 @@ function  opensim_get_region_info($region, &$db=null)
 //		$rginfos[$UUID]['regionName'] 	 ... name of region
 //		$rginfos[$UUID]['locX']		  	 ... location X
 //		$rginfos[$UUID]['locY']		  	 ... location Y
+//		$rginfos[$UUID]['sizeX']		 ... size X
+//		$rginfos[$UUID]['sizeY']		 ... size Y
 //		$rginfos[$UUID]['serverIP']	  	 ... IP address of server
 //		$rginfos[$UUID]['serverPort'] 	 ... port num of server
 //		$rginfos[$UUID]['serverURI']  	 ... URI of server
@@ -995,7 +999,7 @@ function  opensim_get_regions_infos($condition='', &$db=null)
 
 	$rginfos = array();
 
-	$items = ' regions.uuid,regionName,locX,locY,serverIP,serverURI,serverHttpPort,owner_uuid,estate_map.EstateID,EstateOwner,EstateName,';
+	$items = ' regions.uuid,regionName,locX,locY,sizeX,sizeY,serverIP,serverURI,serverHttpPort,owner_uuid,estate_map.EstateID,EstateOwner,EstateName,';
  	$join1 = ' FROM regions LEFT JOIN estate_map ON RegionID=regions.uuid ';
  	$join2 = ' LEFT JOIN estate_settings ON estate_map.EstateID=estate_settings.EstateID ';
 
@@ -1017,12 +1021,14 @@ function  opensim_get_regions_infos($condition='', &$db=null)
 
 	$db->query($query_str);
 	if ($db->Errno==0) {
-		while (list($UUID,$regionName,$locX,$locY,$serverIP,$serverURI,$serverPort,
+		while (list($UUID,$regionName,$locX,$locY,$sizeX,$sizeY,$serverIP,$serverURI,$serverPort,
 						$owneruuid,$estateid,$estateowner,$estatename,$firstname,$lastname) = $db->next_record()) {
 			$rginfos[$UUID]['UUID']		  	= $UUID;
 			$rginfos[$UUID]['regionName'] 	= $regionName;
 			$rginfos[$UUID]['locX']		  	= $locX;
 			$rginfos[$UUID]['locY']		  	= $locY;
+			$rginfos[$UUID]['sizeX']		= $sizeX;
+			$rginfos[$UUID]['sizeY']		= $sizeY;
 			$rginfos[$UUID]['serverIP']	  	= $serverIP;
 			$rginfos[$UUID]['serverPort'] 	= $serverPort;
 			$rginfos[$UUID]['serverURI']  	= $serverURI;
