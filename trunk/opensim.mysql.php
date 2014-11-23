@@ -386,7 +386,8 @@ function  opensim_get_avatar_uuid($name, &$db=null)
 	$avatar_name = preg_split("/ /", $name, 0, PREG_SPLIT_NO_EMPTY);
 	$firstname = $avatar_name[0];
 	$lastname  = $avatar_name[1];
-	if ($firstname=='' or $lastname=='') return false;
+	if ($firstname=='') return false;
+	if ($lastname=='') $lastname = 'Resident';
 
 	if (!is_object($db)) $db = opensim_new_db();
 	if ($OpenSimVersion==null) opensim_get_db_version($db);
