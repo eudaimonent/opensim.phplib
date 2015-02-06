@@ -777,9 +777,10 @@ function  opensim_get_avatar_flags($uuid, &$db=null)
 	// for Simiangrid
 	else if ($db->exist_table('UserData')) {
 		$db->query("SELECT Value FROM UserData WHERE ID='$uuid' AND Key='UserFlags'");
-		if ($db->Errno==) {
+		if ($db->Errno== 0) {
 			list($flags) = $db->next_record();
-			$flags = json_decode($flags);
+			$obj = json_decode($flags);
+			$flags = $obj->{'UserFlags'};
 			return $flags;
 		}
 	}
@@ -814,7 +815,8 @@ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
 	
 	// for Simiangrid
 	else if ($db->exist_table('UserData')) {
-		$flags = json_encode($flags);
+		$obj = array('UserFlags' => $flags);
+		$flags = json_encode($obj);
 		$query_str = "UPDATE users SET Value='$flags' WHERE ID='$uuid' AND Key='UserFlags'";
 		$db->query($query_str);
 		if ($db->Errno==0) return true;
