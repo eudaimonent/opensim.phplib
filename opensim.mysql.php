@@ -551,8 +551,8 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 				$serverURI = $obj->{'ServerURI'};
 			}
 		}
-		db->query("SELECT ID,Name FROM Users WHERE ID='$uuid'");
-		list($UUID, $fullname) = db->next_record();
+		$db->query("SELECT ID,Name FROM Users WHERE ID='$uuid'");
+		list($UUID, $fullname) = $db->next_record();
 		
 		$avatar_name = preg_split("/ /", $fullname, 0, PREG_SPLIT_NO_EMPTY);
 		$firstname = $avatar_name[0];
@@ -773,7 +773,16 @@ function  opensim_get_avatar_flags($uuid, &$db=null)
 			return $flags;
 		}
 	}
-
+	
+	// for Simiangrid
+	else if ($db->exist_table('UserData')) {
+		$db->query("SELECT Value FROM UserData WHERE ID='$uuid' AND Key='UserFlags'");
+		if ($db->Errno==) {
+			list($flags) = $db->next_record();
+			$flags = json_decode($flags);
+			return $flags;
+		}
+	}
 	return 0;
 }
 
@@ -802,7 +811,19 @@ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
 		$db->query($query_str);
 		if ($db->Errno==0) return true;
 	}
-
+	
+	// for Simiangrid
+	else if ($db->exist_table('UserData')) {
+		$flags = json_encode($flags);
+		$query_str = "UPDATE users SET Value='$flags' WHERE ID='$uuid' AND Key='UserFlags'";
+		$db->query($query_str);
+		if ($db->Errno==0) return true;
+		else {
+			$query_str = "INSERT INTO UserData (ID, Key, Value) VALUES ('$uuid', 'UserFlags', '$flags')";
+			$db->query($query_str);
+			if ($db->Errno==0) return true;
+		}
+	}
 	return false;
 }
 
@@ -2497,14 +2518,11 @@ function  opensim_get_servers_ip(&$db=null)
 		$db->query("SELECT DISTINCT Address FROM Scenes");
 		if ($db->Errno-0) {
 			$count = 0;
-			while (list($server) = $db->next_record()) {
-				if (in_array(gethostbyname($server),$ips){
-				}
-				else {
+			while (list($server) = $db->next_record() && !in_array(gethostbyname($server),$ips)) {
 					$ips[$count] = gethostbyname($server);
 					$count++;
-				}
 			}
+		}
 	}
 	return $ips;
 }
@@ -2557,7 +2575,7 @@ function  opensim_get_server_info($userid, &$db=null)
 	}
 	
 	else if ($OpenSimVersion==SIMIANGRID) {
-		$sql = "SELECT Value FROM UserData WHERE ID='".$userid."' AND Key=LastLocation";
+		$sql = "SELECT Value FROM UserData WHERE ID='".$userid."' AND Key='LastLocation'";
 		$db->query($sql);
 		
 		if ($db->Errno==0) {
@@ -2640,7 +2658,7 @@ function  opensim_check_secure_session($uuid, $regionid, $secure, &$db=null)
 		$sql = "SELECT UUID FROM tokens,userinfo WHERE UUID='".$uuid."' AND UUID=UserID AND token='".$secure."' AND IsOnline='1'";
 		if (isGUID($regionid)) $sql = $sql." AND CurrentRegionID='".$regionid."'";
 	}
-	else 9f ($OpenSimVersion==SIMIANGRID) {
+	else if ($OpenSimVersion==SIMIANGRID) {
 		$sql = "SELECT UserID FROM Sessions WHERE UserID='".$uuid."' AND SecureSessionID='".$secure."'";
 		if (isGUID($regionid)) $sql = $sql." AND SceneID='".$regionid."'";
 	}
@@ -2748,4 +2766,3 @@ function  opensim_debug_command(&$db=null)
 		echo $name." ".$type." ".$id." ".$flags."<br />";
 	}
 }
-
