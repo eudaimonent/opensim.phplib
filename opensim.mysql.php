@@ -171,13 +171,13 @@ function  opensim_get_db_version(&$db=null)
 	if ($db->exist_table('GridUser')) {
 		$ver = OPENSIM_V07;
 	}
-	else if ($db->exist_table('users')) {
+	else if ($db->exist_table('users', 'regions')) {
 		$ver = OPENSIM_V06;
 	}
 	else if ($db->exist_field('userinfo', 'UserID')) {
 		$ver = AURORASIM;
 	}
-	else if ($db->exist_table('Users')) {
+	else if ($db->exist_table('Sessions')) {
 		$ver = SIMIANGRID;	
 	}
 
@@ -200,7 +200,7 @@ function  opensim_users_update_time(&$db=null)
 
 	if ($db->exist_table('GridUser')) 	$table = 'GridUser';
 	else if ($db->exist_table('users')) $table = 'users';
-	else if ($db->exist_Table('Users')) $table = 'Users';
+	else if ($db->exist_Table('Sessions')) $table = 'Users';
 	else return 0;
 
 	$utime = $db->get_update_time($table);
@@ -233,7 +233,7 @@ function  opensim_users_count_records(&$db=null)
 
 	if ($db->exist_table('GridUser')) 	$table = 'GridUser';
 	else if ($db->exist_table('users')) $table = 'users';
-	else if ($db_exist_table('Users')) $table = 'Users';
+	else if ($db_exist_table('Sessions')) $table = 'Users';
 	else return 0;
 
 	$count = opensim_count_records($table, $db);
@@ -352,7 +352,7 @@ function  opensim_get_avatars_num(&$db=null)
 		$db->query('SELECT COUNT(*) FROM users');
 		list($num) = $db->next_record();
 	}
-	else if ($db->exist_table('Users')) {
+	else if ($db->exist_table('Sessions')) {
 		$db->query('SELECT COUNT(*) FROM Users');
 		list ($num) = $db->next_record();
 	}
@@ -387,7 +387,7 @@ function  opensim_get_avatar_name($uuid, &$db=null)
 		$db->query("SELECT username,lastname FROM users WHERE UUID='$uuid'");
 		list($firstname, $lastname) = $db->next_record();
 	}
-	else if ($db->exist_table('Users')) {
+	else if ($db->exist_table('Sessions')) {
 		$db->query("SELECT Name FROM Users Where ID='$uuid'");
 		list($fullname) = $db->next_record();
 		$avatar_name = preg_split("/ /", $fullname, 0, PREG_SPLIT_NO_EMPTY);
@@ -434,7 +434,7 @@ function  opensim_get_avatar_uuid($name, &$db=null)
 		$db->query("SELECT UUID FROM users WHERE username='$firstname' and lastname='$lastname'");
 		list($uuid) = $db->next_record();
 	}
-	else if ($db->exist_table('Users')) {
+	else if ($db->exist_table('Sessions')) {
 		$db->query("SELECT ID FROM Users WHERE Name='$fullname'");
 		list($uuid) = $db->next_record();
 	}
