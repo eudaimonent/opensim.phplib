@@ -777,9 +777,9 @@ function  opensim_get_avatar_flags($uuid, &$db=null)
 	// for Simiangrid
 	else if ($db->exist_table('UserData')) {
 		$db->query("SELECT Value FROM UserData WHERE ID='$uuid' AND Key='UserFlags'");
-		if ($db->Errno== 0) {
-			list($flags) = $db->next_record();
-			$obj = json_decode($flags);
+		if ($db->Errno==0) {
+			list($flag) = $db->next_record();
+			$obj = json_decode($flag);
 			$flags = $obj->{'UserFlags'};
 			return $flags;
 		}
@@ -815,16 +815,11 @@ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
 	
 	// for Simiangrid
 	else if ($db->exist_table('UserData')) {
-		$obj = array('UserFlags' => $flags);
-		$flags = json_encode($obj);
-		$query_str = "UPDATE users SET Value='$flags' WHERE ID='$uuid' AND Key='UserFlags'";
+		$flag = array('UserFlags' => $flags);
+		$fla = json_encode($flag);
+		$query_str = "UPDATE users SET Value='$fla' WHERE ID='$uuid' AND Key='UserFlags'";
 		$db->query($query_str);
 		if ($db->Errno==0) return true;
-		else {
-			$query_str = "INSERT INTO UserData (ID, Key, Value) VALUES ('$uuid', 'UserFlags', '$flags')";
-			$db->query($query_str);
-			if ($db->Errno==0) return true;
-		}
 	}
 	return false;
 }
@@ -2768,3 +2763,4 @@ function  opensim_debug_command(&$db=null)
 		echo $name." ".$type." ".$id." ".$flags."<br />";
 	}
 }
+
