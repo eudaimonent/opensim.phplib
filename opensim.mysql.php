@@ -543,8 +543,8 @@ function  opensim_get_avatar_info($uuid, &$db=null)
 				list($regionName, $ExtraData) = $db->next_record();
 				$obj = json_decode($ExtraData);
 				$serverIP = $obj->{'ExternalAddress'};
-				$serverHttpPort = $obj->{'ExternalPort'};
 				$serverURI = $obj->{'ServerURI'};
+				$serverHttpPort = strval(parse_url($serverURI, PHP_URL_PORT));
 			}
 		}
 		$db->query("SELECT ID,Name FROM Users WHERE ID='$uuid'");
@@ -2589,8 +2589,8 @@ function  opensim_get_server_info($userid, &$db=null)
 				list($ExtraData) = $db->next_record();
 				$obj = json_decode($ExtraData);
 				$serverip = $obj->{'ExternalAddress'};
-				$httpport = $obj->{'ExternalPort'};
 				$serveruri = $obj->{'ServerURI'};
+				$httpport = strval(parse_url($serveruri, PHP_URL_PORT));
 				$secret = $obj->{'RegionSecret'};
 			}
 		}
