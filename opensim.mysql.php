@@ -774,7 +774,7 @@ function  opensim_get_avatar_flags($uuid, &$db=null)
 			list($flag) = $db->next_record();
 			$obj = json_decode($flag);
 			$flags = $obj->{'UserFlags'};
-			return $flags;
+			return intval($flags);
 		}
 	}
 
@@ -811,7 +811,7 @@ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
 	
 	// for Simiangrid
 	else if ($db->exist_table('UserData')) {
-		$flag = array('UserFlags' => $flags);
+		$flag = array('UserFlags' => strval($flags));
 		$fla = json_encode($flag);
 		$query_str = "UPDATE UserData SET Value='$fla' WHERE ID='$uuid' AND Key='UserFlags'";
 		$db->query($query_str);
@@ -2582,7 +2582,7 @@ function  opensim_get_server_info($userid, &$db=null)
 	}
 	
 	else if ($OpenSimVersion==SIMIANGRID) {
-		$sql = "SELECT SceneID FROM Sessions WHERE UserID='".$userid."'";
+		$sql = "SELECT SceneID FROM Sessions WHERE UserID='$userid'";
 		$db->query($sql);
 		
 		if ($db->Errno==0) {
@@ -2771,4 +2771,5 @@ function  opensim_debug_command(&$db=null)
 		echo $name." ".$type." ".$id." ".$flags."<br />";
 	}
 }
+
 
