@@ -813,13 +813,19 @@ function  opensim_set_avatar_flags($uuid, $flags=0, &$db=null)
 	else if ($db->exist_table('UserData')) {
 		$flag = array('UserFlags' => $flags);
 		$fla = json_encode($flag);
-		$query_str = "UPDATE users SET Value='$fla' WHERE ID='$uuid' AND Key='UserFlags'";
+		$query_str = "UPDATE UserData SET Value='$fla' WHERE ID='$uuid' AND Key='UserFlags'";
 		$db->query($query_str);
 		if ($db->Errno==0) return true;
+		else {
+			$query_str = "INSERT INTO UserData (ID, Key, Value)
+			VALUES ('$uuid', 'UserFlags', '$fla')";
+			$db->query($query_str);
+			if ($db->Errno==0) return true;
+		}
 	}
 
 	// for 0.6
-	else if ($db->exist_table('users')) {
+	else if ($db->exist_table('users') && $db->exist_table('regions')) {
 		$query_str = "UPDATE users SET userFlags='$flags' WHERE UUID='$uuid'";
 		$db->query($query_str);
 		if ($db->Errno==0) return true;
