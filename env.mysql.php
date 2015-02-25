@@ -37,7 +37,7 @@ require_once(ENV_HELPER_PATH.'/../include/mysql.func.php');
 //
 // for Currency
 
-function env_set_money_transaction($sourceId, $destId, $amount, $type, $falgs, $desc, $prminvent, $nxtowner, $ip)
+function env_set_money_transaction($sourceId, $destId, $amount, $type, $flags, $desc, $prminvent, $nxtowner, $ip)
 {
     if (!isNumeric($amount)) return;
 	if (!isGUID($sourceId))  $sourceId = '00000000-0000-0000-0000-000000000000';
