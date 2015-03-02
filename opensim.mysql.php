@@ -2709,7 +2709,7 @@ function  opensim_check_region_secret($uuid, $secret, &$db=null)
 			list($ExtraData) = $db->next_record();
 			$obj = json_decode($ExtraData);
 			$RegionSecret = $obj->{'RegionSecret'};
-			if ($RegionSecret==$uuid) return true;
+			if ($RegionSecret==$secret) return true;
 		}
 	}
 	else {
